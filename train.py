@@ -99,10 +99,9 @@ def train_main(model_file_path, data_file_path, features=['Close'], seq_length=3
     print("Shared data saved to disk")
 
 if __name__ == '__main__':
-    data_file_path = f'./raw/2/stocks/INTC.csv';
+    data_file_path = f'./raw/2/etfs/SPY.csv';
     start_time     = datetime.now().strftime('%Y:%m:%d')
-    # file_name      = f'./models/test-model-{start_time}'
-    file_name = f'./models/test-model'
+    file_name      = f'./models/test-model-{start_time}'
 
     os.makedirs('./models/', exist_ok=True)
 

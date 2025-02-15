@@ -31,16 +31,18 @@ def test_main(model_path):
 
     test_inv_label = scaler.inverse_transform(test_label)
 
+    basename = os.path.basename(model_load_path).replace(".keras", "")
+
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))
     plt.plot(test_inv_label, color='blue', label='Actual Close Price')
     plt.plot(test_inv_pred, color='red', label='Predicted Close Price')
-    plt.title('Close Price Prediction')
+    plt.title(f'Close Price Prediction {basename}')
     plt.xlabel('Time')
     plt.ylabel('Close Price')
     plt.legend()
 
-    plt.savefig('predictions.png')
+    plt.savefig(f'predictions-{basename}.png')
 
     plt.show()
 
