@@ -3,3 +3,6 @@
 raw/
 processed/
 __pycache__/
+models/
+shared_data.pkl
+*.sublime-project
