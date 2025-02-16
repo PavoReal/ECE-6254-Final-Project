@@ -3,3 +3,22 @@ LSTM algrithm for predicting stock prices:
 My sources:
 https://www.geeksforgeeks.org/long-short-term-memory-lstm-rnn-in-tensorflow/
 
+To overcome the drawbacks encounters in RNN the scientist made an invention called “LONG SHORT TERM MEMORY”.  
+LSTM is the child of RNN where it can store long-term information and overcome the drawback of vanishing gradient.
+
+1. Forget Gate
+
+It is responsible for keeping the information or forgetting it so the sigmoid activation function is applied to it 
+the output will be ranging from 0-1 if it is 0(forget the information) or 1(keep the information).
+
+2. Input Gate
+
+It is responsible for expressing the importance of new information carried by the input here we will be applying 
+two activation functions sigmoid and tanh. Sigmoid functionality is to keep or discard the information whereas 
+tanh function is to subtract information from the cell state or to add new information to the cell state.
+
+3. 3. Output gate
+
+Based on the information we have gained we give our sentence as the fill-in-the-blank to the output gate based 
+on the information it perceived will output the result
+
