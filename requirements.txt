@@ -1,10 +1,10 @@
-pandas>=2.0.0
-matplotlib>=3.7.0
-scikit-learn>=1.2.0
-tensorflow-macos>=2.13.0; sys_platform == 'darwin' and platform_machine == 'arm64'
-tensorflow-metal>=0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
-tensorflow>=2.13.0; sys_platform != 'darwin'
-tensorflow-gpu>=2.13.0; sys_platform != 'darwin'
-keras>=2.13.0
-numpy>=1.21.0
+pandas
+matplotlib
+scikit-learn
+tensorflow-macos; sys_platform == 'darwin' and platform_machine == 'arm64'
+tensorflow-metal; sys_platform == 'darwin' and platform_machine == 'arm64'
+tensorflow;     sys_platform != 'darwin'
+tensorflow-gpu; sys_platform != 'darwin'
+keras
+numpy
 kagglehub 

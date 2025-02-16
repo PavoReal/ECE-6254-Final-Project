@@ -46,7 +46,7 @@ def test_main(model_path):
 
     plt.show()
 
-if __name__ == '__main__':
-    model_path = './models/test-model'
+# if __name__ == '__main__':
+#     model_path = './models/test-model'
 
-    test_main(model_path);
+#     test_main(model_path);

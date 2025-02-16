@@ -8,3 +8,4 @@ shared_data.pkl
 *.sublime-project
 *.sublime-workspace
 *.png
+.DS_Store

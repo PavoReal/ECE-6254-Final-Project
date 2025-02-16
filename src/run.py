@@ -1,7 +1,5 @@
 import argparse
-import train
-import test
-
+from ece6254 import train, test, dataset
 
 def run_main():
     parser = argparse.ArgumentParser(description='CLI interface for training and testing models.')
@@ -19,15 +17,19 @@ def run_main():
     test_parser = subparsers.add_parser('test', help='Test the model')
     test_parser.add_argument('-m', '--model_path', type=str, required=True, help='Path to the model file (without extension) to load the model')
 
+    download_parser = subparsers.add_parser('download', help='Download the dataset')
+    download_parser.add_argument('-p', '--path', type=str, required=True, help='Path to save the dataset')
+
     args = parser.parse_args()
 
     if args.command == 'train':
         train.train_main(args.model_file, args.data_file, features=args.features, seq_length=args.seq_length, epochs=args.epochs)
     elif args.command == 'test':
         test.test_main(args.model_path)
+    elif args.command == 'download':
+        dataset.download_and_save(args.path)
     else:
         parser.print_help()
-
 
 if __name__ == '__main__':
     run_main()
