@@ -11,18 +11,7 @@ from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Inpu
 from tensorflow.keras.models    import Sequential, load_model
 from sklearn.preprocessing      import MinMaxScaler
 
-def create_sequence(dataset, seq_length):
-    if len(dataset) <= seq_length:
-        print(f"Dataset length {len(dataset)} is too short for sequence length {seq_length}.")
-        return np.empty((0, seq_length, dataset.shape[1])), np.empty((0, dataset.shape[1]))
-    
-    seqs, labels = [], []
-
-    for i in range(seq_length, len(dataset)):
-        seqs.append(dataset[i - seq_length:i, :])
-        labels.append(dataset[i, :])
-
-    return np.array(seqs), np.array(labels)
+from . import dataset
 
 def create_model(seq_length, data_shape):
     model = Sequential()
@@ -37,27 +26,22 @@ def create_model(seq_length, data_shape):
 
     return model
 
-def train_main(model_file_path, data_file_path, features=['Close'], seq_length=30, epochs=80):
+def train_main(model_file_path, train_file_path, test_file_path, features=['Close'], seq_length=30, epochs=80):
     # Load dataset
-    data = pd.read_csv(data_file_path)
+    training_data = pd.read_csv(train_file_path)
+    testing_data  = pd.read_csv(test_file_path)
 
     # Fit our scaler
     scaler     = MinMaxScaler()
-    stock_data = scaler.fit_transform(data[features])
+    train_data = scaler.fit_transform(training_data[features])
+    test_data  = scaler.transform(testing_data[features])
 
-    if len(stock_data) < seq_length:
+    if len(train_data) < seq_length:
         raise ValueError("Not enough input data")
 
-    train_test_ratio = 0.8;
-
-    # Train/test split
-    train_size = int(train_test_ratio * len(stock_data))
-    train_data = stock_data[:train_size]
-    test_data  = stock_data[train_size:]
-
     # Generate sequences
-    train_seq, train_label = create_sequence(train_data, seq_length)
-    test_seq,  test_label  = create_sequence(test_data, seq_length)
+    train_seq, train_label = dataset.create_sequence(train_data, seq_length)
+    test_seq,  test_label  = dataset.create_sequence(test_data,  seq_length)
 
     if train_seq.size == 0:
         raise ValueError("Training data is empty")
@@ -91,18 +75,9 @@ def train_main(model_file_path, data_file_path, features=['Close'], seq_length=3
     print('Model saved to disk')
 
     shated_data_path = model_file_path + '.pkl'
-    shared_data      = {'test_seq': test_seq, 'test_label': test_label, 'scaler': scaler, 'seq_length': seq_length}
+    shared_data      = {'scaler': scaler, 'seq_length': seq_length, 'features': features}
 
     with open(shated_data_path, 'wb') as f:
         pickle.dump(shared_data, f)
 
     print("Shared data saved to disk")
-
-# if __name__ == '__main__':
-#     data_file_path = f'./raw/2/etfs/SPY.csv';
-#     start_time     = datetime.now().strftime('%Y:%m:%d')
-#     file_name      = f'./models/test-model-{start_time}'
-
-#     os.makedirs('./models/', exist_ok=True)
-
-#     train_main(file_name, data_file_path);

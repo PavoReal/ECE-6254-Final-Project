@@ -1,5 +1,10 @@
 # ECE 6254 Final Project
 
+## TODO
+In no particular order:
+- Better prediction visualization and output
+- 
+
 ## Setup
 
 ### Setup venv and install deps
@@ -37,9 +42,3 @@ To test the model, run the following command, note no extension on the model nam
 ``` bash
 python src/run.py test -m ./models/test-model
 ```
-
-## TODO
-In no particular order:
-- Split training and testing dataset files
-- Better prediction visualization and output
-- 

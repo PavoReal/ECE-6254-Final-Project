@@ -2,8 +2,11 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import glob, os
 import pickle
+import pandas as pd
 
-def test_main(model_path):
+from . import dataset
+
+def test_main(model_path, dataset_load_path):
     model_load_path       = model_path + '.keras'
     shared_data_load_path = model_path + '.pkl'
 
@@ -12,13 +15,19 @@ def test_main(model_path):
 
     print(f'Loaded model {model_load_path} from disk')
 
+    testing_data = pd.read_csv(dataset_load_path)
+
     # Load shared data
     with open(shared_data_load_path, "rb") as f:
         shared_data = pickle.load(f)
 
-    test_seq   = shared_data["test_seq"]
-    test_label = shared_data["test_label"]
+    features   = shared_data["features"];
     scaler     = shared_data["scaler"]
+    seq_length = shared_data["seq_length"]
+
+    test_data  = scaler.transform(testing_data[features])
+
+    test_seq, test_label = dataset.create_sequence(test_data, seq_length)
 
     print(f'Loaded shared data {shared_data_load_path} from disk')
 
@@ -45,8 +54,3 @@ def test_main(model_path):
     plt.savefig(f'predictions-{basename}.png')
 
     plt.show()
-
-# if __name__ == '__main__':
-#     model_path = './models/test-model'
-
-#     test_main(model_path);

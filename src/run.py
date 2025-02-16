@@ -9,6 +9,7 @@ def run_main():
     train_parser = subparsers.add_parser('train', help='Train the model')
     train_parser.add_argument('-m', '--model_file', type=str, required=True, help='Path to the model file (without extension) to save or load the model')
     train_parser.add_argument('-d', '--data_file', type=str, required=True, help='Path to the training data file')
+    train_parser.add_argument('-t', '--test_data', type=str, required=True, help='Path to the testing data file')
     train_parser.add_argument('-f', '--features', nargs='+', default=['Close'], help='Features to train on')
     train_parser.add_argument('-s', '--seq_length', type=int, default=30, help='Sequence length for training')
     train_parser.add_argument('-e', '--epochs', type=int, default=80, help='Number of epochs')
@@ -16,6 +17,7 @@ def run_main():
     # Test command parser
     test_parser = subparsers.add_parser('test', help='Test the model')
     test_parser.add_argument('-m', '--model_path', type=str, required=True, help='Path to the model file (without extension) to load the model')
+    test_parser.add_argument('-d', '--data_file',  type=str, required=True, help='Path to the testing data file')
 
     download_parser = subparsers.add_parser('download', help='Download the dataset')
     download_parser.add_argument('-p', '--path', type=str, required=True, help='Path to save the dataset')
@@ -23,9 +25,9 @@ def run_main():
     args = parser.parse_args()
 
     if args.command == 'train':
-        train.train_main(args.model_file, args.data_file, features=args.features, seq_length=args.seq_length, epochs=args.epochs)
+        train.train_main(args.model_file, args.data_file, args.test_data, features=args.features, seq_length=args.seq_length, epochs=args.epochs)
     elif args.command == 'test':
-        test.test_main(args.model_path)
+        test.test_main(args.model_path, args.data_file)
     elif args.command == 'download':
         dataset.download_and_save(args.path)
     else:
