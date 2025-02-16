@@ -1,0 +1,5 @@
+LSTM algrithm for predicting stock prices:
+
+My sources:
+https://www.geeksforgeeks.org/long-short-term-memory-lstm-rnn-in-tensorflow/
+
