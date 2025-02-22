@@ -13,7 +13,7 @@ from sklearn.preprocessing      import MinMaxScaler
 
 from . import dataset
 
-def create_model(seq_length, data_shape):
+def create_model_gp(seq_length, data_shape):
     model = Sequential()
     model.add(Input(shape=(seq_length, data_shape)))
     model.add(Bidirectional(LSTM(64, return_sequences=True)))
@@ -26,7 +26,34 @@ def create_model(seq_length, data_shape):
 
     return model
 
-def train_main(model_file_path, train_file_path, test_file_path, features=['Close'], seq_length=30, epochs=80):
+def create_model_anu(seq_length, data_shape):
+    model = Sequential()
+    model.add(Input(shape=(seq_length, data_shape)))
+    model.add(LSTM(units = 50, activation = 'relu', return_sequences=True))
+    model.add(Dropout(0.2))
+    model.add(LSTM(units = 60, activation = 'relu', return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(LSTM(units = 80, activation = 'relu', return_sequences=True))
+    model.add(Dropout(0.4))
+    model.add(LSTM(units = 120, activation = 'relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(units = 1))
+
+    return model
+
+model_arch = [{'name': 'gp', 'desc': 'Initial test model from gp-lstm-test branch', 'func': create_model_gp}, {'name': 'anu', 'desc': 'Initial test model from anush-lstm branch', 'func': create_model_anu}]
+
+def get_model_arch(name):
+    for arch in model_arch:
+        if arch["name"] == name:
+            return arch
+
+    raise ValueError(f'Unknown model {name}')
+
+
+    return model
+
+def train_main(model_file_path, train_file_path, test_file_path, features, seq_length, epochs, model_arch):
     # Load dataset
     training_data = pd.read_csv(train_file_path)
     testing_data  = pd.read_csv(test_file_path)
@@ -56,7 +83,7 @@ def train_main(model_file_path, train_file_path, test_file_path, features=['Clos
         model = load_model(model_load_path);
         print('Loaded model from disk')
     else:
-        model = create_model(seq_length, train_data.shape[1])
+        model = model_arch["func"](seq_length, train_data.shape[1])
 
         model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error'])
         print('Compiled new model')
