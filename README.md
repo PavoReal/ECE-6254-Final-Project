@@ -36,10 +36,28 @@ If you want to specify a custom download folder, use the `-p` flag:
 python src/run.py download -p <dataset_folder>
 ```
 
+## Adding new models
+Inside `src/train.py` you'll find the `model_arch` variable. To add your model follow the pattern done for `create_model_gp` and `create_model_anu`. You'll need to give the model a name, description, and function. The function should create and return the model, but not compile it. For example:
+
+```python3
+def create_model_gp(seq_length, data_shape):
+    model = Sequential()
+    model.add(Input(shape=(seq_length, data_shape)))
+    model.add(Bidirectional(LSTM(64, return_sequences=True)))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())
+    model.add(Bidirectional(LSTM(64)))
+    model.add(Dropout(0.2))
+    model.add(BatchNormalization())
+    model.add(Dense(1))
+
+    return model
+```
+
 ## Usage
 ```
 usage: run.py [-h] {train,test,compare,download,arch_list,dataset_list} ...
-
+\
 CLI interface for training and testing models.
 
 positional arguments:
