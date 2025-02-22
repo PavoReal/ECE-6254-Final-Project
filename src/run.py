@@ -61,10 +61,11 @@ def run_main():
     test_parser.add_argument('--data_dir',         type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
 
     # Compare command
-    # compare_parser = subparsers.add_parser('compare', help='Compare two already trained models')
-    # compare_parser.add_argument('-m', '--model_path',  type=str, required=True, help='Path to the model file (without extension)')
-    # compare_parser.add_argument('-d' '--dataset_name', type=str, required=True, help='Name of dataset to use, use command dataset_list for a complete list of available datasets')
-    # compare_parser.add_argument('--data_dir',          type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
+    compare_parser = subparsers.add_parser('compare', help='Compare two already trained models')
+    compare_parser.add_argument('-a', '--model_path_a', type=str, required=True,       help='Path to model file 1 (without extension)')
+    compare_parser.add_argument('-b', '--model_path_b', type=str, required=True,       help='Path to model file 2 (without extension)')
+    compare_parser.add_argument('-d', '--data_name',     type=str, required=True,       help='Name of dataset to use, use command dataset_list for a complete list of available datasets')
+    compare_parser.add_argument('--data_dir',           type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
 
     # Download command
     download_parser = subparsers.add_parser('download', help='Download the dataset')
@@ -86,6 +87,8 @@ def run_main():
         test.test_main(model_path=args.model_path, data_name=args.data_name, data_dir=args.data_dir)
     elif args.command == 'download':
         dataset.download_and_save(args.path)
+    elif args.command == 'compare':
+        test.compare_main(model_path_a=args.model_path_a, model_path_b=args.model_path_b, data_name=args.data_name, data_dir=args.data_dir)
     elif args.command == 'arch_list':
         print_arch_list()
     elif args.command == 'dataset_list':
