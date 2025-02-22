@@ -6,7 +6,10 @@ import pandas as pd
 
 from . import dataset
 
-def test_main(model_path, dataset_load_path):
+def test_main(model_path, data_name, data_dir):
+
+    ignored, dataset_load_path = dataset.get_dataset_files(data_name, data_dir)
+
     model_load_path       = model_path + '.keras'
     shared_data_load_path = model_path + '.pkl'
 

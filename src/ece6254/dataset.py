@@ -6,10 +6,13 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
 def get_training_dataset_path(ticker, data_dir):
-    return os.path.join(data_dir, 'train', ticker + '.csv')
+    return os.path.join(data_dir, 'split', 'train', ticker + '.csv')
 
 def get_testing_dataset_path(ticker, data_dir):
-    return os.path.join(data_dir, 'test', ticker + '.csv')
+    return os.path.join(data_dir, 'split', 'test', ticker + '.csv')
+
+def get_dataset_files(ticker, data_dir):
+    return get_training_dataset_path(ticker, data_dir), get_testing_dataset_path(ticker, data_dir)
 
 def create_sequence(dataset, seq_length):
     if len(dataset) <= seq_length:
