@@ -49,7 +49,7 @@ def run_main():
     train_parser.add_argument('-m', '--model_file', type=str,  required=True,                       help='Path to the model file (without extension) to save or load the model')
     train_parser.add_argument('-d', '--data_name',  type=str,  required=True,                       help='Name of the dataset item, use command dataset_list for a complete list')
     train_parser.add_argument('--data_dir',         type=str,  default="./dataset",                 help='Override the default dataset dir of ./dataset')
-    train_parser.add_argument('-f', '--features',   nargs='+', default=['Close'],                   help='Features to train on')
+    train_parser.add_argument('-f', '--features',   nargs='+', default=['Close', 'Volume'],                   help='Features to train on')
     train_parser.add_argument('-a', '--model_arch', type=str,  default=train.model_arch[0]["name"], help='Change the model architecture, use command arch_list for a complete list')
     train_parser.add_argument('-s', '--seq_length', type=int,  default=30,                          help='Sequence length for training')
     train_parser.add_argument('-e', '--epochs',     type=int,  default=80,                          help='Number of epochs')
