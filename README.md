@@ -1,5 +1,9 @@
 # ECE 6254 Final Project
 
+## TODO
+- Actually reproduce some paper
+- Testing / comparing models doesn't work if they weren't trained on only single feature
+
 ## Setup
 
 ### Setup venv and install deps
