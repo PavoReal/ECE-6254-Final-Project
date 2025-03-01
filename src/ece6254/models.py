@@ -1,5 +1,5 @@
 from tensorflow.keras.models    import Sequential
-from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Input, BatchNormalization
+from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Input, BatchNormalization, Flatten
 
 def create_model_gp(seq_length, data_shape):
     model = Sequential()
@@ -38,6 +38,7 @@ def create_ann_model(seq_length, data_shape):
     """
     model = Sequential([
         Input(shape=(seq_length, data_shape)),
+        Flatten(),
         Dense(10, activation='relu'),
         Dense(10, activation='relu'),
         Dropout(0.5),
