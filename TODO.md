@@ -1,5 +1,5 @@
 # TODO PHASE 1
-- Test all new models
+- Fix ann model testing
 - Fix testing when trained with multiple features
 - Compare more then two models at once
 - Download fresh training data with yfinance
