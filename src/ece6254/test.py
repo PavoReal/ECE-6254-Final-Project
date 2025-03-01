@@ -43,10 +43,13 @@ def test_main(model_path, data_name, data_dir):
     test_pred     = model.predict(test_seq)
     test_inv_pred = scaler.inverse_transform(test_pred)
 
-    if test_label.ndim == 1 or test_label.shape[1] != 1:
-        test_label = test_label.reshape(-1, 1)
+    # if test_label.ndim == 1 or test_label.shape[1] != 1:
+    #     test_label = test_label.reshape(-1, 1)
 
     test_inv_label = scaler.inverse_transform(test_label)
+
+    # Xkcd style, cool kids only
+    # plt.xkcd()
 
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))
@@ -75,11 +78,11 @@ def compare_main(model_path_a, model_path_b, data_name, data_dir):
     test_inv_pred_b = scaler_b.inverse_transform(test_pred_b)
 
     # Do we need to keep these?
-    if test_label_a.ndim == 1 or test_label_a.shape[1] != 1:
-        test_label_a = test_label_a.reshape(-1, 1)
+    # if test_label_a.ndim == 1 or test_label_a.shape[1] != 1:
+    #     test_label_a = test_label_a.reshape(-1, 1)
 
-    if test_label_b.ndim == 1 or test_label_b.shape[1] != 1:
-        test_label_b = test_label_b.reshape(-1, 1)
+    # if test_label_b.ndim == 1 or test_label_b.shape[1] != 1:
+    #     test_label_b = test_label_b.reshape(-1, 1)
 
     test_inv_label_a = scaler_a.inverse_transform(test_label_a)
     test_inv_label_b = scaler_b.inverse_transform(test_label_b)

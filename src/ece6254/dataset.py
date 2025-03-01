@@ -5,6 +5,16 @@ import pandas as pd
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 
+def print_dataset_list(folder):
+    always_exclude = ['symbols_valid_meta.csv']
+
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            if file in always_exclude:
+                continue;
+
+            print(f'{file}')
+
 def get_training_dataset_path(ticker, data_dir):
     return os.path.join(data_dir, 'split', 'train', ticker + '.csv')
 

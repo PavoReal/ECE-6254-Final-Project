@@ -1,5 +1,7 @@
 # ECE 6254 Final Project
 
+Phase 1 paper: Gülmez, B. (2023). Stock price prediction with optimized deep LSTM network with artificial rabbits optimization algorithm. Expert Systems With Applications, 227, 120346. (https://doi.org/10.1016/j.eswa.2023.120346)[https://doi.org/10.1016/j.eswa.2023.120346]
+
 ## Setup
 
 ### Setup venv and install deps

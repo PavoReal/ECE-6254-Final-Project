@@ -1,44 +1,6 @@
 import argparse
 import os
-from ece6254 import train, test, dataset
-
-def print_arch_list():
-    longest_name = 0
-    longet_desc  = 0
-
-    for arch in train.model_arch:
-        longest_name = max(longest_name, len(arch["name"]))
-        longet_desc  = max(longet_desc, len(arch["desc"]))
-
-    longest_name = max(14, longest_name)
-
-    total_width = longest_name + longet_desc + 4
-
-    print("~" * total_width)
-
-    print(f'{"name".ljust(longest_name)} -- {"description".ljust(longet_desc)}')
-    print(f'{"-" * (longest_name + longet_desc + 4)}')
-
-    for arch in train.model_arch:
-        
-        default = "";
-        if arch == train.model_arch[0]:
-            default = " (default)"
-
-        print(f'{(arch["name"] + default).ljust(longest_name)} -- {arch["desc"].ljust(longet_desc)}')
-
-    print("~" * total_width)
-
-def print_dataset_list(folder):
-    always_exclude = ['symbols_valid_meta.csv']
-
-    for root, dirs, files in os.walk(folder):
-        for file in files:
-            if file in always_exclude:
-                continue;
-
-            print(f'{file}')
-
+from ece6254 import train, test, dataset, models
 
 def run_main():
     parser = argparse.ArgumentParser(description='CLI interface for training and testing models.')
@@ -49,8 +11,8 @@ def run_main():
     train_parser.add_argument('-m', '--model_file', type=str,  required=True,                       help='Path to the model file (without extension) to save or load the model')
     train_parser.add_argument('-d', '--data_name',  type=str,  required=True,                       help='Name of the dataset item, use command dataset_list for a complete list')
     train_parser.add_argument('--data_dir',         type=str,  default="./dataset",                 help='Override the default dataset dir of ./dataset')
-    train_parser.add_argument('-f', '--features',   nargs='+', default=['Close', 'Volume'],                   help='Features to train on')
-    train_parser.add_argument('-a', '--model_arch', type=str,  default=train.model_arch[0]["name"], help='Change the model architecture, use command arch_list for a complete list')
+    train_parser.add_argument('-f', '--features',   nargs='+', default=['Close', 'Open', 'High', 'Low'],           help='Features to train on')
+    train_parser.add_argument('-a', '--model_arch', type=str,  default= models.model_arch[0]["name"], help='Change the model architecture, use command arch_list for a complete list')
     train_parser.add_argument('-s', '--seq_length', type=int,  default=30,                          help='Sequence length for training')
     train_parser.add_argument('-e', '--epochs',     type=int,  default=80,                          help='Number of epochs')
 
@@ -90,9 +52,9 @@ def run_main():
     elif args.command == 'compare':
         test.compare_main(model_path_a=args.model_path_a, model_path_b=args.model_path_b, data_name=args.data_name, data_dir=args.data_dir)
     elif args.command == 'arch_list':
-        print_arch_list()
+        models.print_arch_list()
     elif args.command == 'dataset_list':
-        print_dataset_list(args.path)
+        dataset.print_dataset_list(args.path)
     else:
         parser.print_help()
 

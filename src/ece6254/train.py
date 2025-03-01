@@ -12,44 +12,14 @@ from tensorflow.keras.models    import Sequential, load_model
 from sklearn.preprocessing      import MinMaxScaler
 
 from . import dataset
-
-def create_model_gp(seq_length, data_shape):
-    model = Sequential()
-    model.add(Input(shape=(seq_length, data_shape)))
-    model.add(Bidirectional(LSTM(64, return_sequences=True)))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
-    model.add(Bidirectional(LSTM(64)))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
-    model.add(Dense(1))
-
-    return model
-
-def create_model_anu(seq_length, data_shape):
-    model = Sequential()
-    model.add(Input(shape=(seq_length, data_shape)))
-    model.add(LSTM(units = 50, activation = 'relu', return_sequences=True))
-    model.add(Dropout(0.2))
-    model.add(LSTM(units = 60, activation = 'relu', return_sequences=True))
-    model.add(Dropout(0.3))
-    model.add(LSTM(units = 80, activation = 'relu', return_sequences=True))
-    model.add(Dropout(0.4))
-    model.add(LSTM(units = 120, activation = 'relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(units = 1))
-
-    return model
-
-model_arch = [{'name': 'gp', 'desc': 'Initial test model from gp-lstm-test branch', 'func': create_model_gp}, {'name': 'anu', 'desc': 'Initial test model from anush-lstm branch', 'func': create_model_anu}]
+from . import models
 
 def get_model_arch(name):
-    for arch in model_arch:
+    for arch in models.model_arch:
         if arch["name"] == name:
             return arch
 
     raise ValueError(f'Unknown model {name}')
-
 
     return model
 
