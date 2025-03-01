@@ -57,8 +57,6 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
         print('Loaded model from disk')
     else:
         model = model_arch["func"](seq_length, train_data.shape[1])
-
-        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error'])
         print('Compiled new model')
 
     model.summary()
