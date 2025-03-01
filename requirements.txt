@@ -1,0 +1,10 @@
+pandas
+matplotlib
+scikit-learn
+tensorflow-macos; sys_platform == 'darwin' and platform_machine == 'arm64'
+tensorflow-metal; sys_platform == 'darwin' and platform_machine == 'arm64'
+tensorflow;     sys_platform != 'darwin'
+PyQt6; sys_platform != 'darwin'
+keras
+numpy
+kagglehub 
