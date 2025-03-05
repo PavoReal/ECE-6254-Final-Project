@@ -49,7 +49,7 @@ def test_main(model_path, data_name, data_dir):
     test_inv_label = scaler.inverse_transform(test_label)
 
     # Xkcd style, cool kids only
-    # plt.xkcd()
+    plt.xkcd()
 
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))
@@ -60,9 +60,11 @@ def test_main(model_path, data_name, data_dir):
     plt.ylabel('Close Price')
     plt.legend()
 
-    os.makedirs('./figures', exist_ok=True)
+    save_dir = './predictions'
 
-    plt.savefig(f'./figures/predictions-{data_name}.png')
+    os.makedirs(save_dir, exist_ok=True)
+
+    plt.savefig(f'{save_dir}/predictions-{os.path.basename(model_path)}-{data_name}.png')
 
     plt.show()
 

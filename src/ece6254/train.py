@@ -24,7 +24,6 @@ def get_model_arch(name):
     return model
 
 def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch):
-
     train_file_path, test_file_path = dataset.get_dataset_files(data_name, data_dir)
 
     # Load dataset
