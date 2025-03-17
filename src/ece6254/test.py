@@ -3,6 +3,7 @@ import tensorflow as tf
 import glob, os
 import pickle
 import pandas as pd
+import numpy as np
 
 from . import dataset
 
@@ -39,17 +40,35 @@ def test_main(model_path, data_name, data_dir):
 
     model, test_data, test_seq, test_label, scaler = load_model_files(model_path, data_name, data_dir)
 
+    # debugging print statements
+    # print(f"test_seq shape: {test_seq.shape}")
+    # print(f"test_label shape: {test_label.shape}")
+    # print(f"test_pred shape: {model.predict(test_seq).shape}")
     # Prediction & inverse scaling
-    test_pred     = model.predict(test_seq)
-    test_inv_pred = scaler.inverse_transform(test_pred)
+    test_pred = model.predict(test_seq)
+
+    # put the predictions in the correct column (assuming we're predicting Close)
+    with open(model_path + '.pkl', "rb") as f:
+        shared_data = pickle.load(f)
+    features = shared_data["features"]
+
+    # only selecting the 'Close' feature
+    target_feature_index = features.index('Close') if 'Close' in features else 0
 
     # if test_label.ndim == 1 or test_label.shape[1] != 1:
     #     test_label = test_label.reshape(-1, 1)
 
+    # correctly sizing the pred and label test arrays
+    dummy_pred_array = np.zeros((test_pred.shape[0], len(features)))
+    dummy_pred_array[:, target_feature_index] = test_pred.flatten()
+    test_inv_pred = scaler.inverse_transform(dummy_pred_array)
+    test_inv_pred = test_inv_pred[:, target_feature_index].reshape(-1, 1)
+
     test_inv_label = scaler.inverse_transform(test_label)
+    test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
 
     # Xkcd style, cool kids only
-    # plt.xkcd()
+    plt.xkcd()
 
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))
@@ -60,9 +79,11 @@ def test_main(model_path, data_name, data_dir):
     plt.ylabel('Close Price')
     plt.legend()
 
-    os.makedirs('./figures', exist_ok=True)
+    save_dir = './predictions'
 
-    plt.savefig(f'./figures/predictions-{data_name}.png')
+    os.makedirs(save_dir, exist_ok=True)
+
+    plt.savefig(f'{save_dir}/predictions-{os.path.basename(model_path)}-{data_name}.png')
 
     plt.show()
 
