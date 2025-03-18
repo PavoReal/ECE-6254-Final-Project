@@ -87,44 +87,60 @@ def test_main(model_path, data_name, data_dir):
 
     plt.show()
 
-def compare_main(model_path_a, model_path_b, data_name, data_dir):
+def compare_main(model_paths, data_name, data_dir):
+    # List to store all model predictions and their names
+    predictions = []
+    model_names = []
+    longest_path = 0
 
-    model_a, test_data_a, test_seq_a, test_label_a, scaler_a = load_model_files(model_path_a, data_name, data_dir)
-    model_b, test_data_b, test_seq_b, test_label_b, scaler_b = load_model_files(model_path_b, data_name, data_dir)
+    # Load each model and get its predictions
+    for model_path in model_paths:
+        model, test_data, test_seq, test_label, scaler = load_model_files(model_path, data_name, data_dir)
+        test_pred = model.predict(test_seq)
 
-    test_pred_a = model_a.predict(test_seq_a)
-    test_pred_b = model_b.predict(test_seq_b)
+        # Load features from shared data
+        with open(model_path + '.pkl', "rb") as f:
+            shared_data = pickle.load(f)
+        features = shared_data["features"]
 
-    test_inv_pred_a = scaler_a.inverse_transform(test_pred_a)
-    test_inv_pred_b = scaler_b.inverse_transform(test_pred_b)
+        # Only selecting the 'Close' feature
+        target_feature_index = features.index('Close') if 'Close' in features else 0
 
-    # Do we need to keep these?
-    # if test_label_a.ndim == 1 or test_label_a.shape[1] != 1:
-    #     test_label_a = test_label_a.reshape(-1, 1)
+        # Correctly sizing the pred and label test arrays
+        dummy_pred_array = np.zeros((test_pred.shape[0], len(features)))
+        dummy_pred_array[:, target_feature_index] = test_pred.flatten()
+        test_inv_pred = scaler.inverse_transform(dummy_pred_array)
+        test_inv_pred = test_inv_pred[:, target_feature_index].reshape(-1, 1)
 
-    # if test_label_b.ndim == 1 or test_label_b.shape[1] != 1:
-    #     test_label_b = test_label_b.reshape(-1, 1)
+        test_inv_label = scaler.inverse_transform(test_label)
+        test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
+        
+        predictions.append(test_inv_pred)
+        model_names.append(os.path.basename(model_path))
+        longest_path = max(longest_path, len(model_path))
 
-    test_inv_label_a = scaler_a.inverse_transform(test_label_a)
-    test_inv_label_b = scaler_b.inverse_transform(test_label_b)
-
-    longest_path = max(len(model_path_a), len(model_path_b))
-
+    # Plot setup
     plt.figure(figsize=(12,6))
-    plt.plot(test_inv_label_a, color='blue',  label='Actual Close Price')
-    plt.plot(test_inv_pred_a,  color='red',   label=f'{model_path_a.ljust(longest_path)} Predicted Close Price')
-    plt.plot(test_inv_pred_b,  color='green', label=f'{model_path_b.ljust(longest_path)} Predicted Close Price')
+    
+    # Plot actual values (using the last test_inv_label since they're all the same)
+    plt.plot(test_inv_label, color='blue', label='Actual Close Price')
+    
+    # Define a color map for predictions
+    colors = ['red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+    
+    # Plot each model's predictions
+    for i, (pred, name) in enumerate(zip(predictions, model_names)):
+        color = colors[i % len(colors)]  # Cycle through colors if more models than colors
+        plt.plot(pred, color=color, label=f'{name.ljust(longest_path)} Predicted Close Price')
 
     plt.title(f'Close Price Prediction {data_name}')
     plt.xlabel('Time')
     plt.ylabel('Close Price')
     plt.legend()
 
-    name_a = os.path.basename(model_path_a)
-    name_b = os.path.basename(model_path_b)
-
+    # Create filename from all model names
+    filename = f'./figures/compare-{"-".join(model_names)}-{data_name}.png'
     os.makedirs('./figures', exist_ok=True)
-
-    plt.savefig(f'./figures/compare-{name_a}-{name_b}-{data_name}.png')
+    plt.savefig(filename)
 
     plt.show()
