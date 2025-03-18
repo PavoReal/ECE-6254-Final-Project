@@ -147,7 +147,7 @@ python src/run.py compare -m ./models/test-model-1 ./models/test-model-2 -d SPY
 
 To compare multiple models at once:
 ```bash
-python src/run.py compare -m ./models/lstm1d-model ./models/lstm2d-model ./models/lstm3d-model -d SPY
+python src/run.py compare -m ./models/test-model-1 ./models/test-model-2 ./models/test-model-3 -d SPY
 ```
 
 The comparison will generate a plot showing the actual price and predictions from all models with different colors. The plot will be saved in the `./figures` directory with a filename that includes all the model names.
