@@ -20,15 +20,9 @@ pip install -r requirements.txt
 ```
 
 ### Download the dataset
-```
-usage: run.py download [-h] [-p PATH]
+You have two options for downloading data:
 
-options:
-  -h, --help            show this help message and exit
-  -p PATH, --path PATH  Path to save the dataset, defaults to ./dataset
-```
-To download the dataset into the default `./dataset` folder:
-
+#### Option 1: Original Kaggle Dataset
 ```bash
 python src/run.py download 
 ```
@@ -36,6 +30,22 @@ python src/run.py download
 If you want to specify a custom download folder, use the `-p` flag:
 ```bash
 python src/run.py download -p <dataset_folder>
+```
+
+#### Option 2: Fresh Data from Yahoo Finance
+Download fresh data for all companies in the original dataset:
+```bash
+python src/run.py download_yfinance
+```
+
+Or download data for specific symbols:
+```bash
+python src/run.py download_yfinance --symbols SPYD AAPL GOOGL
+```
+
+You can customize the output directory and train/test split ratio:
+```bash
+python src/run.py download_yfinance --output ./my_fresh_data --train-ratio 0.7
 ```
 
 ## Adding new models
@@ -78,7 +88,9 @@ options:
 
 ### Training a model
 ```
-usage: run.py train [-h] -m MODEL_FILE -d DATA_NAME [--data_dir DATA_DIR] [-f FEATURES [FEATURES ...]] [-a MODEL_ARCH] [-s SEQ_LENGTH] [-e EPOCHS]
+usage: run.py train [-h] -m MODEL_FILE -d DATA_NAME [--data_dir DATA_DIR]
+                   [--data_source {kaggle,yfinance}] [-f FEATURES [FEATURES ...]]
+                   [-a MODEL_ARCH] [-s SEQ_LENGTH] [-e EPOCHS]
 
 options:
   -h, --help            show this help message and exit
@@ -87,6 +99,8 @@ options:
   -d DATA_NAME, --data_name DATA_NAME
                         Name of the dataset item, use command dataset_list for a complete list
   --data_dir DATA_DIR   Override the default dataset dir of ./dataset
+  --data_source {kaggle,yfinance}
+                        Choose data source: kaggle (original dataset) or yfinance (fresh data)
   -f FEATURES [FEATURES ...], --features FEATURES [FEATURES ...]
                         Features to train on
   -a MODEL_ARCH, --model_arch MODEL_ARCH
@@ -102,9 +116,14 @@ First create a directory to save the models within:
 mkdir -p ./models
 ```
 
-Next, to train the model with default settings, run the following command:
+To train a model using the original Kaggle dataset:
 ``` bash
 python src/run.py train -m ./models/test-model -d SPY 
+```
+
+To train a model using fresh data from Yahoo Finance:
+``` bash
+python src/run.py train -m ./models/test-model -d SPY --data_source yfinance
 ```
 
 Training will create `./models/test-model.keras` and `./models/test-model.pkl` files.
@@ -112,6 +131,7 @@ Training will create `./models/test-model.keras` and `./models/test-model.pkl` f
 ### Testing a model
 ```
 usage: run.py test [-h] -m MODEL_PATH -d DATA_NAME [--data_dir DATA_DIR]
+                  [--data_source {kaggle,yfinance}]
 
 options:
   -h, --help            show this help message and exit
@@ -120,16 +140,24 @@ options:
   -d DATA_NAME, --data_name DATA_NAME
                         Name of the dataset item, use command dataset_list for a complete list
   --data_dir DATA_DIR   Override the default dataset dir of ./dataset
+  --data_source {kaggle,yfinance}
+                        Choose data source: kaggle (original dataset) or yfinance (fresh data)
 ```
 
-Basic usage:
+To test a model using the original Kaggle dataset:
 ``` bash
 python src/run.py test -m ./models/test-model -d SPY
 ```
 
+To test a model using fresh data from Yahoo Finance:
+``` bash
+python src/run.py test -m ./models/test-model -d SPY --data_source yfinance
+```
+
 ### Comparing multiple models
 ```
-usage: run.py compare [-h] -m MODEL_PATHS [MODEL_PATHS ...] -d DATA_NAME [--data_dir DATA_DIR]
+usage: run.py compare [-h] -m MODEL_PATHS [MODEL_PATHS ...] -d DATA_NAME
+                     [--data_dir DATA_DIR] [--data_source {kaggle,yfinance}]
 
 options:
   -h, --help            show this help message and exit
@@ -138,11 +166,18 @@ options:
   -d DATA_NAME, --data_name DATA_NAME
                         Name of dataset to use, use command dataset_list for a complete list of available datasets
   --data_dir DATA_DIR   Override the default dataset dir of ./dataset
+  --data_source {kaggle,yfinance}
+                        Choose data source: kaggle (original dataset) or yfinance (fresh data)
 ```
 
-Basic usage to compare two models:
+To compare models using the original Kaggle dataset:
 ```bash
 python src/run.py compare -m ./models/test-model-1 ./models/test-model-2 -d SPY
+```
+
+To compare models using fresh data from Yahoo Finance:
+```bash
+python src/run.py compare -m ./models/test-model-1 ./models/test-model-2 -d SPY --data_source yfinance
 ```
 
 To compare multiple models at once:
