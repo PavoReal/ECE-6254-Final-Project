@@ -59,7 +59,7 @@ def create_model_gp(seq_length, data_shape):
 ## Usage
 ```
 usage: run.py [-h] {train,test,compare,download,arch_list,dataset_list} ...
-\
+
 CLI interface for training and testing models.
 
 positional arguments:
@@ -67,7 +67,7 @@ positional arguments:
                         Sub-command help (train or test)
     train               Train a model
     test                Test a model
-    compare             Compare two already trained models
+    compare             Compare multiple trained models
     download            Download the dataset
     arch_list           List all available model architectures
     dataset_list        List all available datasets.
@@ -109,7 +109,7 @@ python src/run.py train -m ./models/test-model -d SPY
 
 Training will create `./models/test-model.keras` and `./models/test-model.pkl` files.
 
-## Testing a model
+### Testing a model
 ```
 usage: run.py test [-h] -m MODEL_PATH -d DATA_NAME [--data_dir DATA_DIR]
 
@@ -127,22 +127,27 @@ Basic usage:
 python src/run.py test -m ./models/test-model -d SPY
 ```
 
-## Comparing two models
+### Comparing multiple models
 ```
-usage: run.py compare [-h] -a MODEL_PATH_A -b MODEL_PATH_B -d DATA_NAME [--data_dir DATA_DIR]
+usage: run.py compare [-h] -m MODEL_PATHS [MODEL_PATHS ...] -d DATA_NAME [--data_dir DATA_DIR]
 
 options:
   -h, --help            show this help message and exit
-  -a MODEL_PATH_A, --model_path_a MODEL_PATH_A
-                        Path to model file 1 (without extension)
-  -b MODEL_PATH_B, --model_path_b MODEL_PATH_B
-                        Path to model file 2 (without extension)
+  -m MODEL_PATHS [MODEL_PATHS ...], --model_paths MODEL_PATHS [MODEL_PATHS ...]
+                        List of model file paths (without extension) to compare
   -d DATA_NAME, --data_name DATA_NAME
                         Name of dataset to use, use command dataset_list for a complete list of available datasets
   --data_dir DATA_DIR   Override the default dataset dir of ./dataset
 ```
 
-Basic usage:
+Basic usage to compare two models:
 ```bash
-python src/run.py compare -a ./models/test-model-a -b ./models/test-model-b -d SPY
+python src/run.py compare -m ./models/test-model-1 ./models/test-model-2 -d SPY
 ```
+
+To compare multiple models at once:
+```bash
+python src/run.py compare -m ./models/test-model-1 ./models/test-model-2 ./models/test-model-3 -d SPY
+```
+
+The comparison will generate a plot showing the actual price and predictions from all models with different colors. The plot will be saved in the `./figures` directory with a filename that includes all the model names.
