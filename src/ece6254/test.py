@@ -128,9 +128,8 @@ def compare_main(model_paths, data_name, data_dir):
     # Define a color map for predictions
     colors = ['red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
     
-    # Plot each model's predictions
     for i, (pred, name) in enumerate(zip(predictions, model_names)):
-        color = colors[i % len(colors)]  # Cycle through colors if more models than colors
+        color = colors[i % len(colors)]
         plt.plot(pred, color=color, label=f'{name.ljust(longest_path)} Predicted Close Price')
 
     plt.title(f'Close Price Prediction {data_name}')

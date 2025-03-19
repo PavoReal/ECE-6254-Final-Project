@@ -11,7 +11,7 @@ def run_main():
     train_parser.add_argument('-m', '--model_file', type=str, required=True, help='Path to the model file (without extension) to save or load the model')
     train_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of the dataset item, use command dataset_list for a complete list')
     train_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
-    train_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle (original dataset) or yfinance (fresh data)')
+    train_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
     train_parser.add_argument('-f', '--features', nargs='+', default=['Close', 'Open', 'High', 'Low'], help='Features to train on')
     train_parser.add_argument('-a', '--model_arch', type=str, default=models.model_arch[0]["name"], help='Change the model architecture, use command arch_list for a complete list')
     train_parser.add_argument('-s', '--seq_length', type=int, default=30, help='Sequence length for training')
@@ -22,25 +22,25 @@ def run_main():
     test_parser.add_argument('-m', '--model_path', type=str, required=True, help='Path to the model file (without extension)')
     test_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of the dataset item, use command dataset_list for a complete list')
     test_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
-    test_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle (original dataset) or yfinance (fresh data)')
+    test_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
 
     # Compare command
     compare_parser = subparsers.add_parser('compare', help='Compare multiple trained models')
     compare_parser.add_argument('-m', '--model_paths', type=str, nargs='+', required=True, help='List of model file paths (without extension) to compare')
     compare_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of dataset to use, use command dataset_list for a complete list of available datasets')
     compare_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
-    compare_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle (original dataset) or yfinance (fresh data)')
+    compare_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
 
-    # Download command (Kaggle dataset)
+    # Download Kaggle command
     download_parser = subparsers.add_parser('download', help='Download the Kaggle dataset')
     download_parser.add_argument('-p', '--path', type=str, default="./dataset", help='Path to save the dataset, defaults to ./dataset')
 
-    # Download fresh data command (yfinance)
-    yfinance_parser = subparsers.add_parser('download_yfinance', help='Download fresh data using yfinance')
+    # Download yfinance command
+    yfinance_parser = subparsers.add_parser('download_yfinance', help='Download data using yfinance')
     yfinance_parser.add_argument('--output', default='./yfinance_dataset', help='Output directory')
     yfinance_parser.add_argument('--train-ratio', type=float, default=0.8, help='Ratio of data to use for training')
-    yfinance_parser.add_argument('--symbols', nargs='+', help='Optional: Specific stock symbols to download. If not provided, will download all symbols from current dataset.')
-    yfinance_parser.add_argument('--dataset-dir', default='./dataset', help='Directory containing the current dataset')
+    yfinance_parser.add_argument('--symbols', nargs='+', help='Specific stock data to download')
+    yfinance_parser.add_argument('--dataset-dir', default='./dataset', help='Directory containing the existing dataset for data consistency')
 
     # Arch list command
     arch_list_parser = subparsers.add_parser('arch_list', help='List all available model architectures')
@@ -48,7 +48,7 @@ def run_main():
     # Dataset list command
     dataset_list_parser = subparsers.add_parser('dataset_list', help='List all available datasets.')
     dataset_list_parser.add_argument('-p', '--path', type=str, default="./dataset", help='Path to dataset dir, defaults to ./dataset')
-    dataset_list_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle (original dataset) or yfinance (fresh data)')
+    dataset_list_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
 
     args = parser.parse_args()
 
@@ -64,16 +64,16 @@ def run_main():
     elif args.command == 'download_yfinance':
         if not args.symbols:
             symbols = dataset_yfinance.get_all_symbols(args.dataset_dir)
-            print(f"Found {len(symbols)} symbols in current dataset")
+            print(f"{len(symbols)} symbols found in original dataset")
         else:
             symbols = args.symbols
-            print(f"Using {len(symbols)} provided symbols")
+            print(f"{len(symbols)} provided symbols used")
         
         for symbol in symbols:
             try:
                 dataset_yfinance.download_and_split_data(symbol, args.output, args.train_ratio)
             except Exception as e:
-                print(f"Error downloading {symbol}: {str(e)}")
+                print(f"Error occured while downloading data for {symbol}: {str(e)}")
     elif args.command == 'compare':
         data_dir = "./yfinance_dataset" if args.data_source == 'yfinance' else args.data_dir
         test.compare_main(model_paths=args.model_paths, data_name=args.data_name, data_dir=data_dir)

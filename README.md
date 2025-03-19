@@ -33,17 +33,17 @@ python src/run.py download -p <dataset_folder>
 ```
 
 #### Option 2: Fresh Data from Yahoo Finance
-Download fresh data for all companies in the original dataset:
+Download data for all companies that exist in the original kaggle dataset:
 ```bash
 python src/run.py download_yfinance
 ```
 
-Or download data for specific symbols:
+Or download data for specific companies:
 ```bash
 python src/run.py download_yfinance --symbols SPYD AAPL GOOGL
 ```
 
-You can customize the output directory and train/test split ratio:
+Output directory and train/test split ratio can be customized as below:
 ```bash
 python src/run.py download_yfinance --output ./my_fresh_data --train-ratio 0.7
 ```
@@ -100,7 +100,7 @@ options:
                         Name of the dataset item, use command dataset_list for a complete list
   --data_dir DATA_DIR   Override the default dataset dir of ./dataset
   --data_source {kaggle,yfinance}
-                        Choose data source: kaggle (original dataset) or yfinance (fresh data)
+                        Choose data source: kaggle or yfinance
   -f FEATURES [FEATURES ...], --features FEATURES [FEATURES ...]
                         Features to train on
   -a MODEL_ARCH, --model_arch MODEL_ARCH
@@ -141,7 +141,7 @@ options:
                         Name of the dataset item, use command dataset_list for a complete list
   --data_dir DATA_DIR   Override the default dataset dir of ./dataset
   --data_source {kaggle,yfinance}
-                        Choose data source: kaggle (original dataset) or yfinance (fresh data)
+                        Choose data source: kaggle or yfinance
 ```
 
 To test a model using the original Kaggle dataset:
@@ -167,7 +167,7 @@ options:
                         Name of dataset to use, use command dataset_list for a complete list of available datasets
   --data_dir DATA_DIR   Override the default dataset dir of ./dataset
   --data_source {kaggle,yfinance}
-                        Choose data source: kaggle (original dataset) or yfinance (fresh data)
+                        Choose data source: kaggle or yfinance
 ```
 
 To compare models using the original Kaggle dataset:
