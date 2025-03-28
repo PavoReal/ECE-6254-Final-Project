@@ -95,6 +95,16 @@ def create_lstm3d_model(seq_length, data_shape):
     model.compile(optimizer='adam', loss='mse')
     return model
 
+#TO-DO
+def create_randomforest_model():
+
+#TO-DO
+def create_kernel_model():
+
+#TO-DO
+def create_svm_model():
+
+
 # LSTM-GA and LSTM-ARO Model
 def create_lstm_optimized_model(seq_length, data_shape, x0, x1, x2, x3, x4, x5, x6, optimizer, learning_rate):
     """
