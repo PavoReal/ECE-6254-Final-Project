@@ -35,11 +35,12 @@ def getDataSet(ticker, startDate, endDate, loadFromOnline):
                 print(f"Second attempt failed: {inner_e}")
                 return None
     else:
+        os.makedirs("./trainDir", exist_ok=True)
+        os.makedirs("./testDir", exist_ok=True)
         filename = ticker + ".csv"
-        filepath = os.path.join("C:\\Users\\rs8c8bh\\New folder\\raw", filename)
+        filepath = os.path.join("C:\\Users\\rs8c8bh\\modelsClass\\raw", filename)
         if os.path.isfile(filepath):
             data = pd.read_csv(filepath)
-            print(data.head())
             return data
 
 def create_lag(seq_length):
@@ -59,12 +60,18 @@ def create_randomforest_model(seq_length):
     
     return rf_regressor
 
-def split_dataset():
+def split_dataset(dataset, train_ratio, ticker):
     # parse csv into X and y datasets
     # split into test and train
-    # only for train dataset, create a "lag" 
-
-    return None
+    if len(dataset) > 0:
+        dataset = dataset.sort_values('Date')
+        split_idx = int(len(dataset)*train_ratio)
+        train, test = dataset.iloc[:split_idx], dataset.iloc[split_idx:]
+        train_file = os.path.join("./trainDir", f"{ticker}.csv")
+        test_file = os.path.join("./testDir", f"{ticker}.csv")
+        train.to_csv(train_file, index=False)
+        test.to_csv(test_file, index=False)
+    return train, test
 
 
 #----------------------------------------------------------------------------------------------------------------
@@ -75,6 +82,7 @@ ticker = "CEF"
 start_date = "2020-01-01"
 end_date = "2023-12-31"
 myDataset = getDataSet(ticker,start_date,end_date,False)
-#print(myDataset.head())
+train_set, test_set = split_dataset(myDataset, 0.8, ticker)
+
 #save the data to a csv file.
 #myDataset.to_csv("MyData_historical_data.csv")
