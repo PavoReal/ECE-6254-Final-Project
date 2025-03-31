@@ -1,20 +1,25 @@
 import numpy as np
+import seaborn as sns
 import yfinance as yf
 import pandas as pd
 import os
 import time
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import GridSearchCV
 
 # RANDOM FOREST
 
 # features-> different lags. 
 
-# param_grid = {
-#     'n_estimators' = [100, 200, 300],
-#     'criterion' = []
-# }
+param_grid = {
+    'n_estimators': [100, 200, 300],
+    'max_depth': [None, 5, 10],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
 # Load model- yfinance
 def getDataSet(ticker, startDate, endDate, loadFromOnline):
     # load model from yfinance or anything from keras
@@ -41,17 +46,24 @@ def getDataSet(ticker, startDate, endDate, loadFromOnline):
             return data
 
 def create_lag(seq_length, dataset, feature_name):
+    
     # return new X and y from lag data
     X = np.zeros((len(dataset) - seq_length, seq_length))
     for i in range(seq_length, len(dataset)):
-        X[i - seq_length] = dataset[feature_name][i - seq_length : i].values
-    y = dataset[feature_name][seq_length : ].values
+        #X[i - seq_length] = dataset[feature_name][i - seq_length : i].values
+        X[i - seq_length] = dataset[i - seq_length : i].flatten()
+    # y = dataset[feature_name][seq_length : ].values
+    y = dataset[seq_length : ].flatten()
     return X, y
 
-#TO-DO
 # add GridSearch for parameter tuning
-# GridSearchCV(estimator=RandomForestRegressor(random_state=42), param_grid=param_grid, cv=3, n_jobs=-1, verbose=2)
-
+def grid_search(xtrain, ytrain):
+    grid_search = GridSearchCV(estimator=create_randomforest_model(), param_grid=param_grid, cv=3, scoring='neg_mean_squared_error', verbose=2, n_jobs=-1)
+    grid_search.fit(xtrain, ytrain)
+    best_params = grid_search.best_params_
+    best_model = grid_search.best_estimator_
+    print(best_params)
+    return best_model
 
 # seq_length would be the number of prior data points used to predict the new data point
 def create_randomforest_model():
@@ -61,7 +73,7 @@ def create_randomforest_model():
                                          bootstrap=True, oob_score=False,n_jobs=None,verbose=0,warm_start=False,ccp_alpha=0.0,max_samples=None)
     return rf_regressor
 
-def split_dataset(dataset, train_ratio, ticker):
+def split_and_scale_dataset(dataset, train_ratio, ticker, feature):
     # parse csv into X and y datasets
     # split into test and train
     if len(dataset) > 0:
@@ -72,14 +84,19 @@ def split_dataset(dataset, train_ratio, ticker):
         test_file = os.path.join("./testDir", f"{ticker}.csv")
         train.to_csv(train_file, index=False)
         test.to_csv(test_file, index=False)
-    return train, test
+
+        # scale each data set
+        scaler = MinMaxScaler()
+        train_data = scaler.fit_transform(train[feature].values.reshape(-1, 1))
+        test_data = scaler.transform(test[feature].values.reshape(-1, 1))
+        np.savetxt("my_array.csv", train_data, delimiter=",")
+        return train_data, test_data
 
 def train_model(xtrain, ytrain, xtest):
-    theRFmodel = create_randomforest_model()
-    theRFmodel.fit(xtrain, ytrain)
 
+    best_model= grid_search(xtrain, ytrain)
     # predicting the test set
-    yPredict = theRFmodel.predict(xtest)
+    yPredict = best_model.predict(xtest)
     return yPredict
 
 def model_evaluation(yPred, yCorrect):
@@ -89,27 +106,34 @@ def model_evaluation(yPred, yCorrect):
 
 #----------------------------------------------------------------------------------------------------------------
 # Define the ticker symbol
-ticker = "CEF"
+ticker = "SPY"
 myFeature = "Close"
 # Define the date range
 start_date = "2020-01-01"
 end_date = "2023-12-31"
 myDataset = getDataSet(ticker,start_date,end_date,False)
-train_set, test_set = split_dataset(myDataset, 0.8, ticker)
+train_set, test_set = split_and_scale_dataset(myDataset, 0.8, ticker, myFeature)
 
 # TRAINING
-lag5 = 5
-X_lag5_train, ylag5_train = create_lag(lag5, train_set, myFeature)
-X_lag5_test, y_lag5_test = create_lag(lag5, test_set, myFeature)
-
-# saving training data to CSV
+lags = [2, 5, 10, 15]
 output_file_pd = 'my_array_pd.csv'
-df = pd.DataFrame(X_lag5_train) #Create a pandas dataframe from the numpy array.
-df['y_lag5Train'] = ylag5_train
-df.to_csv(output_file_pd, index=False)
 
-# training model!
-yPred_lag5 = train_model(X_lag5_train, ylag5_train, X_lag5_test)
-mean_sq_err, mean_abs_err = model_evaluation(yPred_lag5, y_lag5_test)
+for lag in lags:
+    X_lag_train, ylag_train = create_lag(lag, train_set, myFeature)
+    X_lag_test, y_lag_test = create_lag(lag, test_set, myFeature)
+    y_lag_test = pd.DataFrame(y_lag_test)
 
-print("MSE!: ", mean_sq_err, "AbsErr!: ", mean_abs_err)
+    df = pd.DataFrame(X_lag_train) #Create a pandas dataframe from the numpy array.
+    df['y_lag_f"{lag}Train'] = ylag_train
+    df.to_csv(output_file_pd, index=False)
+
+    # training model!
+    yPred_lag = train_model(X_lag_train, ylag_train, X_lag_test)
+    mean_sq_err, mean_abs_err = model_evaluation(yPred_lag.ravel(), y_lag_test)
+
+    print("MSE!: ", mean_sq_err, "AbsErr!: ", mean_abs_err)
+
+    xVal = np.arange(1,len(yPred_lag)+1)
+    plt.plot(xVal, yPred_lag.ravel(), label='Prediction')
+    plt.plot(xVal, y_lag_test, label='Correct')
+    plt.show()
