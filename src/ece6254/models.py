@@ -1,5 +1,7 @@
 from tensorflow.keras.models    import Sequential
 from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Input, BatchNormalization, Flatten
+from ece6254 import randomForest
+import pandas as pd
 
 def create_model_gp(seq_length, data_shape):
     model = Sequential()
@@ -95,16 +97,6 @@ def create_lstm3d_model(seq_length, data_shape):
     model.compile(optimizer='adam', loss='mse')
     return model
 
-#TO-DO
-def create_randomforest_model():
-
-#TO-DO
-def create_kernel_model():
-
-#TO-DO
-def create_svm_model():
-
-
 # LSTM-GA and LSTM-ARO Model
 def create_lstm_optimized_model(seq_length, data_shape, x0, x1, x2, x3, x4, x5, x6, optimizer, learning_rate):
     """
@@ -155,13 +147,23 @@ def create_lstm_optimized_model(seq_length, data_shape, x0, x1, x2, x3, x4, x5, 
     model.compile(optimizer=opt, loss='mse')
     return model
 
+def create_RF_model(train_data, lag):
+    X_lag_train, y_lag_train = randomForest.create_lag(lag, train_data)
+    y_lag_test = pd.DataFrame(y_lag_test)
+    df = pd.DataFrame(X_lag_train) #Create a pandas dataframe from the numpy array.
+    df['y_lag_f"{lag}Train'] = y_lag_train
+    model = randomForest.grid_search(X_lag_train, y_lag_train)
+    return model
+
 model_arch = [
     {'name': 'lstm1d', 'desc': 'Creates the LSTM1D model from Table 2 of the paper', 'func': create_lstm1d_model},
     {'name': 'lstm2d', 'desc': 'Creates the LSTM2D model from Table 3 of the paper', 'func': create_lstm2d_model},
     {'name': 'lstm3d', 'desc': 'Creates the LSTM3D model from Table 4 of the paper', 'func': create_lstm3d_model},
     {'name': 'ann', 'desc': 'Creates the ANN model from Table 1 of the paper', 'func': create_ann_model},
     {'name': 'anu', 'desc': 'Initial test model from anush-lstm branch', 'func': create_model_anu},
-    {'name': 'gp', 'desc': 'Initial test model from gp-lstm-test branch', 'func': create_model_gp}
+    {'name': 'gp', 'desc': 'Initial test model from gp-lstm-test branch', 'func': create_model_gp},
+    {'name': 'randForest', 'desc' : 'Returns ideal random forest regression model from training data', 'func': create_RF_model},
+    {'name': 'lstmGAandARO', 'desc' : "Returns lstm optimized model", 'func':create_lstm_optimized_model},
 ]
 
 def print_arch_list():
