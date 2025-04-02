@@ -16,6 +16,7 @@ def run_main():
     train_parser.add_argument('-a', '--model_arch', type=str, default=models.model_arch[0]["name"], help='Change the model architecture, use command arch_list for a complete list')
     train_parser.add_argument('-s', '--seq_length', type=int, default=30, help='Sequence length for training')
     train_parser.add_argument('-e', '--epochs', type=int, default=80, help='Number of epochs')
+    train_parser.add_argument('-l', '--lag', type=int, default=5, help='Only for Random Forest: how many previous data pts considered for predicting new data pt')
 
     # Test command
     test_parser = subparsers.add_parser('test', help='Test a model')
@@ -55,7 +56,7 @@ def run_main():
     if args.command == 'train':
         data_dir = "./yfinance_dataset" if args.data_source == 'yfinance' else args.data_dir
         train.train_main(model_file_path=args.model_file, data_name=args.data_name, data_dir=data_dir, features=args.features, 
-            seq_length=args.seq_length, epochs=args.epochs, model_arch=train.get_model_arch(args.model_arch))
+            seq_length=args.seq_length, epochs=args.epochs, model_arch=train.get_model_arch(args.model_arch), lag=args.lag)
     elif args.command == 'test':
         data_dir = "./yfinance_dataset" if args.data_source == 'yfinance' else args.data_dir
         test.test_main(model_path=args.model_path, data_name=args.data_name, data_dir=data_dir)
