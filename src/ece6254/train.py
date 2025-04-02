@@ -10,6 +10,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Input, BatchNormalization
 from tensorflow.keras.models    import Sequential, load_model
 from sklearn.preprocessing      import MinMaxScaler
+from ece6254 import randomForest
 
 from . import dataset
 from . import models
@@ -23,7 +24,7 @@ def get_model_arch(name):
 
     return model
 
-def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch):
+def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch, lag):
     train_file_path, test_file_path = dataset.get_dataset_files(data_name, data_dir)
 
     # Load dataset
@@ -48,17 +49,29 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
     train_seq = np.array(train_seq, dtype=np.float32)
     test_seq  = np.array(test_seq,  dtype=np.float32)
 
-    model_load_path = model_file_path + '.keras';
+    model_load_path = model_file_path + '.keras'
 
     # If we can load the model, do that, otherwise create a new one
     if os.path.exists(model_load_path):
-        model = load_model(model_load_path);
+        model = load_model(model_load_path)
         print('Loaded model from disk')
     else:
-        model = model_arch["func"](seq_length, train_data.shape[1])
+        if model_arch["name"] == "randForest":
+            model = model_arch["func"](train_data, lag, features)
+        
+        elif model_arch["name"] == "lstmGAandARO":
+            model = model_arch["func"](seq_length, train_data.shape[1])
+        
+        else:
+            model = model_arch["func"](seq_length, train_data.shape[1])
         print('Compiled new model')
 
+
     model.summary()
+
+    if model_arch["name"] == "randForest":
+        X_lag_test, y_lag_test = randomForest.create_lag(lag, test_data)
+
 
     early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
     reduce_lr  = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
