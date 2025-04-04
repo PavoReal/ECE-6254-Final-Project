@@ -58,6 +58,16 @@ def model_evaluation(yPred, yCorrect):
     meanAbsErr = mean_absolute_error(yCorrect, yPred)
     return meanSqErr, meanAbsErr
 
+# this is only helpful if we want to include multiple features in one matrix. RF does poorly if it's only one feature
+def create_feature_matrix(*args):
+    Xmat = []
+    for i in range(len(args[0])):
+        feature = []
+        for arg in args:
+            feature.append(arg[i].tolist())
+        Xmat.append(np.array(feature).flatten())
+    Xmat = np.array(Xmat)
+    return Xmat
 
 # # training model!
 # yPred_lag = train_model(X_lag_train, ylag_train, X_lag_test)
