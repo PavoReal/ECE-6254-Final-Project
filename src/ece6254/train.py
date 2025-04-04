@@ -32,9 +32,11 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
     testing_data  = pd.read_csv(test_file_path)
 
     # Fit our scaler
-    scaler     = MinMaxScaler()
-    train_data = scaler.fit_transform(training_data[features])
-    test_data  = scaler.transform(testing_data[features])
+    train_scaler     = MinMaxScaler()
+    train_data = train_scaler.fit_transform(training_data[features])
+
+    test_scaler = MinMaxScaler()
+    test_data  = test_scaler.fit_transform(testing_data[features])
 
     if len(train_data) < seq_length:
         raise ValueError("Not enough input data")
@@ -69,10 +71,6 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
 
     model.summary()
 
-    if model_arch["name"] == "randForest":
-        X_lag_test, y_lag_test = randomForest.create_lag(lag, test_data)
-
-
     early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
     reduce_lr  = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
 
@@ -85,7 +83,7 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
     print('Model saved to disk')
 
     shated_data_path = model_file_path + '.pkl'
-    shared_data      = {'scaler': scaler, 'seq_length': seq_length, 'features': features}
+    shared_data      = {'scaler': train_scaler, 'seq_length': seq_length, 'features': features}
 
     with open(shated_data_path, 'wb') as f:
         pickle.dump(shared_data, f)
