@@ -68,9 +68,3 @@ def create_feature_matrix(*args):
         Xmat.append(np.array(feature).flatten())
     Xmat = np.array(Xmat)
     return Xmat
-
-# # training model!
-# yPred_lag = train_model(X_lag_train, ylag_train, X_lag_test)
-# mean_sq_err, mean_abs_err = model_evaluation(yPred_lag.ravel(), y_lag_test)
-
-# print("MSE!: ", mean_sq_err, "AbsErr!: ", mean_abs_err)
