@@ -1,16 +1,12 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import pickle
-import sys
 
-from datetime                   import datetime
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Input, BatchNormalization
-from tensorflow.keras.models    import Sequential, load_model
+from tensorflow.keras.models    import load_model
 from sklearn.preprocessing      import MinMaxScaler
-from ece6254 import randomForest
+import keras_tuner as kt
 
 from . import dataset
 from . import models
@@ -22,9 +18,15 @@ def get_model_arch(name):
 
     raise ValueError(f'Unknown model {name}')
 
-    return model
+build_hp_model_seq_length = 20;
+build_hp_model_data_shape = 1;
+build_hp_model_func       = None;
 
-def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch, lag):
+def build_hp_model(hp):
+    assert build_hp_model_func != None;
+    return build_hp_model_func(hp, build_hp_model_seq_length, build_hp_model_data_shape);
+
+def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch, lag, tune_epocs):
     train_file_path, test_file_path = dataset.get_dataset_files(data_name, data_dir)
 
     # Load dataset
@@ -53,21 +55,48 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
 
     model_load_path = model_file_path + '.keras'
 
+    should_tune = False;
+
     # If we can load the model, do that, otherwise create a new one
     if os.path.exists(model_load_path):
         model = load_model(model_load_path)
         print('Loaded model from disk')
     else:
-        if model_arch["name"] == "randForest":
-            model = model_arch["func"](train_data, lag, features)
-        
-        elif model_arch["name"] == "lstmGAandARO":
-            model = model_arch["func"](seq_length, train_data.shape[1])
-        
+
+        if model_arch["tune"]:
+            global build_hp_model_seq_length;
+            build_hp_model_seq_length = seq_length;
+            
+            global build_hp_model_data_shape;
+            build_hp_model_data_shape = train_data.shape[1];
+            
+            global build_hp_model_func;
+            build_hp_model_func = model_arch["func"];
+
+            should_tune = True;
+
+            tuner = kt.RandomSearch(
+                build_hp_model,
+                objective='val_loss',  # Optimize validation loss
+                max_trials=tune_epocs,         # Number of hyperparameter combinations to try
+                executions_per_trial=3, # Average results over 3 runs per trial
+                directory='tune_work',
+                project_name='lstm_tuning'
+            )
+
+            model = tuner;
+        elif model_arch["name"] == "randForest":
+                model = model_arch["func"](train_data, lag, features)
         else:
             model = model_arch["func"](seq_length, train_data.shape[1])
+
         print('Compiled new model')
 
+    if should_tune:
+        model.search(train_seq, train_label, epochs=50, validation_data=(test_seq, test_label));
+
+        best_model = model.get_best_models(num_models=1)[0];
+        model      = best_model;
 
     model.summary()
 
@@ -76,11 +105,13 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
 
     model.fit(train_seq, train_label, epochs=epochs, validation_data=(test_seq, test_label),
               callbacks=[early_stop, reduce_lr], verbose=1)
-
     # Save model and shared data
     model.save(model_load_path)
 
     print('Model saved to disk')
+
+
+
 
     shated_data_path = model_file_path + '.pkl'
     shared_data      = {'scaler': train_scaler, 'seq_length': seq_length, 'features': features}
