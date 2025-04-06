@@ -71,7 +71,7 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
 
     model.summary()
 
-    early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    early_stop = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
     reduce_lr  = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
 
     model.fit(train_seq, train_label, epochs=epochs, validation_data=(test_seq, test_label),

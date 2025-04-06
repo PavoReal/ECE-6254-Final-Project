@@ -2,6 +2,7 @@ from tensorflow.keras.models    import Sequential
 from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Input, BatchNormalization, Flatten
 from ece6254 import randomForest
 import pandas as pd
+import tensorflow as tf
 
 def create_model_gp(seq_length, data_shape):
     model = Sequential()
@@ -98,7 +99,17 @@ def create_lstm3d_model(seq_length, data_shape):
     return model
 
 # LSTM-GA and LSTM-ARO Model
-def create_lstm_optimized_model(seq_length, data_shape, x0, x1, x2, x3, x4, x5, x6, optimizer, learning_rate):
+def create_lstm_optimized_model(seq_length, data_shape):
+    x0 = 20;
+    x1 = 1;
+    x2 = 50;
+    x3 = 1;
+    x4 = 80;
+    x5 = 120;
+    x6 = 0.5;
+    optimizer = 'adam';
+    learning_rate = 0.001;
+
     """
     Creates the LSTM-GA or LSTM-ARO model from Table 5 of the paper.
     - Architecture: Variable number of LSTM layers (1 to 3), dense, dropout, output dense with 1 neuron
@@ -117,16 +128,12 @@ def create_lstm_optimized_model(seq_length, data_shape, x0, x1, x2, x3, x4, x5, 
     model.add(Input(shape=(seq_length, data_shape)))
 
     if x1 == 0:
-        # Only one LSTM layer
         model.add(LSTM(x0, return_sequences=False))
     else:
-        # First LSTM layer, followed by more if specified
         model.add(LSTM(x0, return_sequences=True))
         if x3 == 0:
-            # Two LSTM layers
             model.add(LSTM(x2, return_sequences=False))
         else:
-            # Three LSTM layers
             model.add(LSTM(x2, return_sequences=True))
             model.add(LSTM(x4, return_sequences=False))
 
@@ -159,6 +166,7 @@ model_arch = [
     {'name': 'lstm1d', 'desc': 'Creates the LSTM1D model from Table 2 of the paper', 'func': create_lstm1d_model},
     {'name': 'lstm2d', 'desc': 'Creates the LSTM2D model from Table 3 of the paper', 'func': create_lstm2d_model},
     {'name': 'lstm3d', 'desc': 'Creates the LSTM3D model from Table 4 of the paper', 'func': create_lstm3d_model},
+    {'name': 'lstm-aro', 'desc': 'Creates the LSTM3D model from Table 4 of the paper', 'func': create_lstm_optimized_model},
     {'name': 'ann', 'desc': 'Creates the ANN model from Table 1 of the paper', 'func': create_ann_model},
     {'name': 'anu', 'desc': 'Initial test model from anush-lstm branch', 'func': create_model_anu},
     {'name': 'gp', 'desc': 'Initial test model from gp-lstm-test branch', 'func': create_model_gp},

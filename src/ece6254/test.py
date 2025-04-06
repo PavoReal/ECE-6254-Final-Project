@@ -68,7 +68,7 @@ def test_main(model_path, data_name, data_dir):
     test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
 
     # Xkcd style, cool kids only
-    plt.xkcd()
+    #plt.xkcd()
 
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))

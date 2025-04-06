@@ -12,9 +12,9 @@ def run_main():
     train_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of the dataset item, use command dataset_list for a complete list')
     train_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
     train_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
-    train_parser.add_argument('-f', '--features', nargs='+', default=['Close', 'Open', 'High', 'Low'], help='Features to train on')
+    train_parser.add_argument('-f', '--features', nargs='+', default=['Close'], help='Features to train on')
     train_parser.add_argument('-a', '--model_arch', type=str, default=models.model_arch[0]["name"], help='Change the model architecture, use command arch_list for a complete list')
-    train_parser.add_argument('-s', '--seq_length', type=int, default=30, help='Sequence length for training')
+    train_parser.add_argument('-s', '--seq_length', type=int, default=20, help='Sequence length for training')
     train_parser.add_argument('-e', '--epochs', type=int, default=80, help='Number of epochs')
     train_parser.add_argument('-l', '--lag', type=int, default=5, help='Only for Random Forest: how many previous data pts considered for predicting new data pt')
 
