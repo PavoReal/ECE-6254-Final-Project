@@ -11,3 +11,4 @@ predictions/
 processed/
 raw/
 shared_data.pkl
+tune_work/

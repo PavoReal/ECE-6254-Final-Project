@@ -1,5 +1,4 @@
 import argparse
-import os
 from ece6254 import train, test, dataset, models, dataset_yfinance
 
 def run_main():
@@ -12,24 +11,26 @@ def run_main():
     train_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of the dataset item, use command dataset_list for a complete list')
     train_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
     train_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
-    train_parser.add_argument('-f', '--features', nargs='+', default=['Close', 'Open', 'High', 'Low'], help='Features to train on')
+    train_parser.add_argument('-f', '--features', nargs='+', default=['Close'], help='Features to train on')
     train_parser.add_argument('-a', '--model_arch', type=str, default=models.model_arch[0]["name"], help='Change the model architecture, use command arch_list for a complete list')
-    train_parser.add_argument('-s', '--seq_length', type=int, default=30, help='Sequence length for training')
+    train_parser.add_argument('-s', '--seq_length', type=int, default=20, help='Sequence length for training')
     train_parser.add_argument('-e', '--epochs', type=int, default=80, help='Number of epochs')
+    train_parser.add_argument('-t', '--tune', type=int, default=50, help='Number of epocs to train hyperparams, only if model supports it')
+    train_parser.add_argument('-l', '--lag', type=int, default=5, help='Only for Random Forest: how many previous data pts considered for predicting new data pt')
 
     # Test command
     test_parser = subparsers.add_parser('test', help='Test a model')
     test_parser.add_argument('-m', '--model_path', type=str, required=True, help='Path to the model file (without extension)')
     test_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of the dataset item, use command dataset_list for a complete list')
     test_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
-    test_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
+    test_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='yfinance', help='Choose data source: kaggle or yfinance')
 
     # Compare command
     compare_parser = subparsers.add_parser('compare', help='Compare multiple trained models')
     compare_parser.add_argument('-m', '--model_paths', type=str, nargs='+', required=True, help='List of model file paths (without extension) to compare')
     compare_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of dataset to use, use command dataset_list for a complete list of available datasets')
     compare_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
-    compare_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
+    compare_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='yfinance', help='Choose data source: kaggle or yfinance')
 
     # Download Kaggle command
     download_parser = subparsers.add_parser('download', help='Download the Kaggle dataset')
@@ -55,7 +56,7 @@ def run_main():
     if args.command == 'train':
         data_dir = "./yfinance_dataset" if args.data_source == 'yfinance' else args.data_dir
         train.train_main(model_file_path=args.model_file, data_name=args.data_name, data_dir=data_dir, features=args.features, 
-            seq_length=args.seq_length, epochs=args.epochs, model_arch=train.get_model_arch(args.model_arch))
+            seq_length=args.seq_length, epochs=args.epochs, model_arch=train.get_model_arch(args.model_arch), lag=args.lag, tune_epocs=args.tune)
     elif args.command == 'test':
         data_dir = "./yfinance_dataset" if args.data_source == 'yfinance' else args.data_dir
         test.test_main(model_path=args.model_path, data_name=args.data_name, data_dir=data_dir)

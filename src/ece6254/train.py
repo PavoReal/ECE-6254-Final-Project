@@ -10,6 +10,9 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Input, BatchNormalization
 from tensorflow.keras.models    import Sequential, load_model
 from sklearn.preprocessing      import MinMaxScaler
+from ece6254 import randomForest
+import keras_tuner as kt
+import tensorflow as tf
 
 from . import dataset
 from . import models
@@ -21,9 +24,16 @@ def get_model_arch(name):
 
     raise ValueError(f'Unknown model {name}')
 
-    return model
 
-def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch):
+build_hp_model_func = None;
+build_hp_model_seq_length = 20;
+build_hp_model_data_shape = 1;
+
+def build_hp_model(hp):
+    assert build_hp_model_func != None;
+    return build_hp_model_func(hp, build_hp_model_seq_length, build_hp_model_data_shape);
+
+def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch, lag, tune_epocs):
     train_file_path, test_file_path = dataset.get_dataset_files(data_name, data_dir)
 
     # Load dataset
@@ -35,35 +45,71 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
     train_data = scaler.fit_transform(training_data[features])
     test_data  = scaler.transform(testing_data[features])
 
-    if len(train_data) < seq_length:
+    if len(train_data) < seq_length and model_arch["name"] != "randForest":
         raise ValueError("Not enough input data")
 
     # Generate sequences
-    train_seq, train_label = dataset.create_sequence(train_data, seq_length)
-    test_seq,  test_label  = dataset.create_sequence(test_data,  seq_length)
 
-    if train_seq.size == 0:
-        raise ValueError("Training data is empty")
+    if model_arch["name"] != "randForest":
+        train_seq, train_label = dataset.create_sequence(train_data, seq_length)
+        test_seq,  test_label  = dataset.create_sequence(test_data,  seq_length)
 
-    train_seq = np.array(train_seq, dtype=np.float32)
-    test_seq  = np.array(test_seq,  dtype=np.float32)
+        if train_seq.size == 0:
+            raise ValueError("Training data is empty")
 
-    model_load_path = model_file_path + '.keras';
+        train_seq = np.array(train_seq, dtype=np.float32)
+        test_seq  = np.array(test_seq,  dtype=np.float32)
+
+        model_load_path = model_file_path + '.keras'
+    else:
+        train_seq = train_data
+        test_seq = test_data
+        train_label = training_data[features[0]][lag:]
+        test_label = test_data[features[0]][lag:]
+        model_load_path = model_file_path + '.pkl'
 
     # If we can load the model, do that, otherwise create a new one
-    if os.path.exists(model_load_path):
-        model = load_model(model_load_path);
-        print('Loaded model from disk')
+    if os.path.exists(model_load_path) and model_arch["name"] != "randForest":
+        model = load_model(model_load_path)
+        print('Loaded Keras model from disk')
     else:
-        model = model_arch["func"](seq_length, train_data.shape[1])
-        print('Compiled new model')
+        if model_arch["name"] == "randForest":
+            model = model_arch["func"](train_data, lag)
+        
+        elif model_arch["tune"] == True:
+            global build_hp_model_func;
+            build_hp_model_func       = model_arch["func"];
+
+            global build_hp_model_data_shape;
+            build_hp_model_data_shape = train_data.shape[1];
+
+            global build_hp_model_seq_length;
+            build_hp_model_seq_length = seq_length;
+
+            tuner = kt.RandomSearch(
+                build_hp_model,
+                objective='val_loss',
+                max_trials=tune_epocs,
+                executions_per_trial=2,
+                directory='tuner_work',
+                project_name=model_arch["name"]
+            )
+
+            tuner.search(train_seq, train_label, epochs=50, validation_data=(test_seq, test_label));
+
+            model = tuner.get_best_models(num_models=1)[0];
+        else:
+            model = model_arch["func"](seq_length, train_data.shape[1])
+
+        print('Compiled model')
 
     model.summary()
 
-    early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-    reduce_lr  = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
+    if model_arch["name"] != "randForest":
+        early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+        reduce_lr  = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
 
-    model.fit(train_seq, train_label, epochs=epochs, validation_data=(test_seq, test_label),
+        model.fit(train_seq, train_label, epochs=epochs, validation_data=(test_seq, test_label),
               callbacks=[early_stop, reduce_lr], verbose=1)
 
     # Save model and shared data
@@ -72,9 +118,10 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
     print('Model saved to disk')
 
     shated_data_path = model_file_path + '.pkl'
-    shared_data      = {'scaler': scaler, 'seq_length': seq_length, 'features': features}
+    shared_data      = {'scaler': scaler, 'seq_length': seq_length, 'features': features, 'lag': lag}
 
     with open(shated_data_path, 'wb') as f:
         pickle.dump(shared_data, f)
 
     print("Shared data saved to disk")
+

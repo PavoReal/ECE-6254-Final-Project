@@ -4,6 +4,7 @@ import glob, os
 import pickle
 import pandas as pd
 import numpy as np
+from ece6254 import randomForest
 
 from . import dataset
 
@@ -12,11 +13,23 @@ def load_model_files(model_path, data_name, data_dir):
 
     model_load_path       = model_path + '.keras'
     shared_data_load_path = model_path + '.pkl'
+    rf_model_path = model_path + '.pkl'
 
     # Load model
-    model = tf.keras.models.load_model(model_load_path)
-
-    print(f'Loaded model {model_load_path} from disk')
+    try:
+        if os.path.exists(model_load_path):
+            model = tf.keras.models.load_model(model_load_path)
+            print(f'Loaded model {model_load_path} from disk')
+        elif os.path.exists(rf_model_path):
+            with open(rf_model_path, 'rb') as f:
+                model = pickle.load(f)
+            print(f'Loaded RF pickle model {rf_model_path} from disk')
+        else:
+            print(f"Error: Model file not found at either {model_load_path} or {rf_model_path}")
+            return None, None, None, None, None
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        return None, None, None, None, None
 
     testing_data = pd.read_csv(dataset_load_path)
 
@@ -24,16 +37,24 @@ def load_model_files(model_path, data_name, data_dir):
     with open(shared_data_load_path, "rb") as f:
         shared_data = pickle.load(f)
 
-    features   = shared_data["features"];
+    features   = shared_data["features"]
     scaler     = shared_data["scaler"]
     seq_length = shared_data["seq_length"]
-
+    lag        = shared_data["lag"]
+    
     test_data  = scaler.transform(testing_data[features])
 
-    test_seq, test_label = dataset.create_sequence(test_data, seq_length)
-
+    if lag is not None and 'randForest' in model_path:
+        X_test_lag, y_test_lag = randomForest.create_lag(lag, test_data)
+        test_seq = X_test_lag
+        test_label = testing_data[features[0]][lag:]
+    elif seq_length is not None and 'randForest' not in model_path:
+        test_seq, test_label = dataset.create_sequence(test_data, seq_length)
+    else:
+        print("Error: Inconsistent or missing sequence/lag information for the model type.")
+        return None, None, None, None, None
+    
     print(f'Loaded shared data {shared_data_load_path} from disk')
-
     return model, test_data, test_seq, test_label, scaler
 
 def test_main(model_path, data_name, data_dir):
@@ -68,7 +89,7 @@ def test_main(model_path, data_name, data_dir):
     test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
 
     # Xkcd style, cool kids only
-    plt.xkcd()
+    #plt.xkcd()
 
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))
