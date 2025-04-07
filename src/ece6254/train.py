@@ -118,7 +118,7 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
     print('Model saved to disk')
 
     shated_data_path = model_file_path + '.pkl'
-    shared_data      = {'scaler': scaler, 'seq_length': seq_length, 'features': features}
+    shared_data      = {'scaler': scaler, 'seq_length': seq_length, 'features': features, 'lag': lag}
 
     with open(shated_data_path, 'wb') as f:
         pickle.dump(shared_data, f)
