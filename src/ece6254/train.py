@@ -62,10 +62,6 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
 
         model_load_path = model_file_path + '.keras'
     else:
-        train_seq = train_data
-        test_seq = test_data
-        train_label = training_data[features[0]][lag:]
-        test_label = test_data[features[0]][lag:]
         model_load_path = model_file_path + '.pkl'
 
     # If we can load the model, do that, otherwise create a new one
@@ -103,9 +99,8 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
 
         print('Compiled model')
 
-    model.summary()
-
     if model_arch["name"] != "randForest":
+        model.summary()
         early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         reduce_lr  = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
 

@@ -109,6 +109,7 @@ options:
                         Sequence length for training
   -e EPOCHS, --epochs EPOCHS
                         Number of epochs
+  -l LAG, --lag LAG
 ```
 
 First create a directory to save the models within:
