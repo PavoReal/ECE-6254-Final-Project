@@ -165,9 +165,6 @@ def create_lstm_optimized_model(hp, seq_length, data_shape):
 
 def create_RF_model(train_data, lag):
     X_lag_train, y_lag_train = randomForest.create_lag(lag, train_data)
-    y_lag_test = pd.DataFrame(y_lag_test)
-    df = pd.DataFrame(X_lag_train) #Create a pandas dataframe from the numpy array.
-    df['y_lag_f"{lag}Train'] = y_lag_train
     model = randomForest.grid_search(X_lag_train, y_lag_train)
     return model
 
