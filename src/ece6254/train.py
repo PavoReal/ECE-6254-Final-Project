@@ -11,6 +11,8 @@ from tensorflow.keras.layers    import Dense, Dropout, LSTM, Bidirectional, Inpu
 from tensorflow.keras.models    import Sequential, load_model
 from sklearn.preprocessing      import MinMaxScaler
 from ece6254 import randomForest
+import keras_tuner as kt
+import tensorflow as tf
 
 from . import dataset
 from . import models
@@ -22,9 +24,16 @@ def get_model_arch(name):
 
     raise ValueError(f'Unknown model {name}')
 
-    return model
 
-def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch, lag):
+build_hp_model_func = None;
+build_hp_model_seq_length = 20;
+build_hp_model_data_shape = 1;
+
+def build_hp_model(hp):
+    assert build_hp_model_func != None;
+    return build_hp_model_func(hp, build_hp_model_seq_length, build_hp_model_data_shape);
+
+def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch, lag, tune_epocs):
     train_file_path, test_file_path = dataset.get_dataset_files(data_name, data_dir)
 
     # Load dataset
@@ -67,13 +76,32 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
         if model_arch["name"] == "randForest":
             model = model_arch["func"](train_data, lag)
         
-        elif model_arch["name"] == "lstmGAandARO":
-            model = model_arch["func"](seq_length, train_data.shape[1])
-        
+        elif model_arch["tune"] == True:
+            global build_hp_model_func;
+            build_hp_model_func       = model_arch["func"];
+
+            global build_hp_model_data_shape;
+            build_hp_model_data_shape = train_data.shape[1];
+
+            global build_hp_model_seq_length;
+            build_hp_model_seq_length = seq_length;
+
+            tuner = kt.RandomSearch(
+                build_hp_model,
+                objective='val_loss',
+                max_trials=tune_epocs,
+                executions_per_trial=2,
+                directory='tuner_work',
+                project_name=model_arch["name"]
+            )
+
+            tuner.search(train_seq, train_label, epochs=50, validation_data=(test_seq, test_label));
+
+            model = tuner.get_best_models(num_models=1)[0];
         else:
             model = model_arch["func"](seq_length, train_data.shape[1])
-        print('Compiled new model')
 
+        print('Compiled model')
 
     model.summary()
 
@@ -96,3 +124,4 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
         pickle.dump(shared_data, f)
 
     print("Shared data saved to disk")
+

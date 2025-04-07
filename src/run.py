@@ -23,14 +23,14 @@ def run_main():
     test_parser.add_argument('-m', '--model_path', type=str, required=True, help='Path to the model file (without extension)')
     test_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of the dataset item, use command dataset_list for a complete list')
     test_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
-    test_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
+    test_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='yfinance', help='Choose data source: kaggle or yfinance')
 
     # Compare command
     compare_parser = subparsers.add_parser('compare', help='Compare multiple trained models')
     compare_parser.add_argument('-m', '--model_paths', type=str, nargs='+', required=True, help='List of model file paths (without extension) to compare')
     compare_parser.add_argument('-d', '--data_name', type=str, required=True, help='Name of dataset to use, use command dataset_list for a complete list of available datasets')
     compare_parser.add_argument('--data_dir', type=str, default="./dataset", help='Override the default dataset dir of ./dataset')
-    compare_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
+    compare_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='yfinance', help='Choose data source: kaggle or yfinance')
 
     # Download Kaggle command
     download_parser = subparsers.add_parser('download', help='Download the Kaggle dataset')
