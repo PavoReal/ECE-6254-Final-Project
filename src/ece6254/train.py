@@ -36,6 +36,8 @@ def build_hp_model(hp):
 def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch, lag, tune_epocs):
     train_file_path, test_file_path = dataset.get_dataset_files(data_name, data_dir)
 
+    
+
     # Load dataset
     training_data = pd.read_csv(train_file_path)
     testing_data  = pd.read_csv(test_file_path)
@@ -86,10 +88,10 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
             global build_hp_model_seq_length;
             build_hp_model_seq_length = seq_length;
 
-            tuner = kt.RandomSearch(
+            tuner = kt.Hyperband(
                 build_hp_model,
-                objective='val_loss',
-                max_trials=tune_epocs,
+                objective='val_mse',
+                factor=3,
                 executions_per_trial=2,
                 directory='tuner_work',
                 project_name=model_arch["name"]
@@ -109,7 +111,7 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
         early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         reduce_lr  = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
 
-        model.fit(train_seq, train_label, epochs=epochs, validation_data=(test_seq, test_label),
+        model.fit(train_seq, train_label, epochs=epochs, batch_size=256, validation_data=(test_seq, test_label),
               callbacks=[early_stop, reduce_lr], verbose=1)
 
     # Save model and shared data

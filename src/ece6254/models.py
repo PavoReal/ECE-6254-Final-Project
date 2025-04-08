@@ -113,23 +113,27 @@ def create_lstm_optimized_model(hp, seq_length, data_shape):
         optimizer: String, one of 'adam', 'sgd', 'rmsprop'
         learning_rate: Float, one of 0.1, 0.01, 0.001, 0.0001, 0.00001
     """
+    max_units = 20;
+    min_units = 1;
 
-    x0 = hp.Int('x0', min_value=1, max_value=20, step=1)
+    x0 = hp.Int('x0', min_value=min_units, max_value=max_units, step=1)
     x1 = hp.Choice('x1', [0, 1])
     
     if x1 == 1:
-        x2 = hp.Int('x2', min_value=1, max_value=20, step=1)
+        x2 = hp.Int('x2', min_value=min_units, max_value=max_units, step=1)
         x3 = hp.Choice('x3', [0, 1])
         if x3 == 1:
-            x4 = hp.Int('x4', min_value=1, max_value=20, step=1)
+            x4 = hp.Int('x4', min_value=min_units, max_value=max_units, step=1)
         else:
             x4 = 0
     else:
         x2 = 0
         x3 = 0
         x4 = 0
-    x5 = hp.Int('x5', min_value=1, max_value=20, step=1)
+
+    x5 = hp.Int('x5', min_value=min_units, max_value=max_units, step=1)
     x6 = hp.Choice('x6', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+
     optimizer_name = hp.Choice('optimizer', ['adam', 'sgd', 'rmsprop'])
     learning_rate = hp.Choice('learning_rate', [1e-1, 1e-2, 1e-3, 1e-4, 1e-5])
 
@@ -160,7 +164,62 @@ def create_lstm_optimized_model(hp, seq_length, data_shape):
         raise ValueError("Unsupported optimizer: choose 'adam', 'sgd', or 'rmsprop'")
 
     # Compile the model
-    model.compile(optimizer=opt, loss='mse')
+    model.compile(optimizer=opt, loss='mse', metrics=['mse'])
+    return model
+
+def create_lstm_optimized_model_large(hp, seq_length, data_shape):
+    max_units = 100;
+    min_units = 20;
+
+    x0 = hp.Int('x0', min_value=min_units, max_value=max_units, step=1)
+    x1 = hp.Choice('x1', [0, 1])
+    
+    if x1 == 1:
+        x2 = hp.Int('x2', min_value=min_units, max_value=max_units, step=1)
+        x3 = hp.Choice('x3', [0, 1])
+        if x3 == 1:
+            x4 = hp.Int('x4', min_value=min_units, max_value=max_units, step=1)
+        else:
+            x4 = 0
+    else:
+        x2 = 0
+        x3 = 0
+        x4 = 0
+
+    x5 = hp.Int('x5', min_value=min_units, max_value=max_units, step=1)
+    x6 = hp.Choice('x6', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+
+    optimizer_name = hp.Choice('optimizer', ['adam', 'sgd', 'rmsprop'])
+    learning_rate = hp.Choice('learning_rate', [1e-1, 1e-2, 1e-3, 1e-4, 1e-5])
+
+    model = Sequential()
+    model.add(Input(shape=(seq_length, data_shape)))
+
+    if x1 == 0:
+        model.add(LSTM(x0, return_sequences=False))
+    else:
+        model.add(LSTM(x0, return_sequences=True))
+        if x3 == 0:
+            model.add(LSTM(x2, return_sequences=False))
+        else:
+            model.add(LSTM(x2, return_sequences=True))
+            model.add(LSTM(x4, return_sequences=False))
+
+    model.add(Dense(x5, activation='relu'))
+    model.add(Dropout(x6))
+    model.add(Dense(1, activation='linear'))
+
+    if optimizer_name == 'adam':
+        opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    elif optimizer_name == 'sgd':
+        opt = tf.keras.optimizers.SGD(learning_rate=learning_rate)
+    elif optimizer_name == 'rmsprop':
+        opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
+    else:
+        raise ValueError("Unsupported optimizer: choose 'adam', 'sgd', or 'rmsprop'")
+
+    # Compile the model
+    model.compile(optimizer=opt, loss='mse', metrics=['mse'])
     return model
 
 def create_RF_model(train_data, lag):
@@ -176,6 +235,7 @@ model_arch = [
     {'name': 'ann',        'desc': 'Creates the ANN model',                                           'func': create_ann_model,'tune': False},
     {'name': 'randForest', 'desc': 'Returns ideal random forest regression model from training data', 'func': create_RF_model,'tune': False},
     {'name': 'lstm-garo',  'desc': "Returns lstm optimized model",                                    'func': create_lstm_optimized_model,'tune': True},
+    {'name': 'lstm-garo-large',  'desc': "Returns lstm optimized model",                                    'func': create_lstm_optimized_model_large,'tune': True},
 ]
 
 def print_arch_list():
