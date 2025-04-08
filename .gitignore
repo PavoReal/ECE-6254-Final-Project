@@ -4,6 +4,7 @@
 *.sublime-workspace
 .DS_Store
 .venv/
+.venv_wsl/
 __pycache__/
 dataset/
 models/
@@ -12,3 +13,4 @@ processed/
 raw/
 shared_data.pkl
 tune_work/
+tuner_work/
