@@ -16,7 +16,7 @@ def run_main():
     train_parser.add_argument('-s', '--seq_length', type=int, default=20, help='Sequence length for training')
     train_parser.add_argument('-e', '--epochs', type=int, default=80, help='Number of epochs')
     train_parser.add_argument('-t', '--tune', type=int, default=50, help='Number of epocs to train hyperparams, only if model supports it')
-    train_parser.add_argument('-l', '--lag', type=int, default=5, help='Only for Random Forest: how many previous data pts considered for predicting new data pt')
+    train_parser.add_argument('-l', '--lag', type=int, default=None, help='Only for Random Forest: how many previous data pts considered for predicting new data pt')
 
     # Test command
     test_parser = subparsers.add_parser('test', help='Test a model')

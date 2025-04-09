@@ -12,17 +12,23 @@ def load_model_files(model_path, data_name, data_dir):
     ignored, dataset_load_path = dataset.get_dataset_files(data_name, data_dir)
 
     model_load_path       = model_path + '.keras'
-    shared_data_load_path = model_path + '.pkl'
-    rf_model_path = model_path + '.pkl'
+    shared_data_load_path = model_path;
+    rf_model_path         = model_path + '.pkl'
+
+    load_rf_shared_data   = False;
 
     # Load model
     try:
         if os.path.exists(model_load_path):
             model = tf.keras.models.load_model(model_load_path)
             print(f'Loaded model {model_load_path} from disk')
+
+            shared_data_load_path = shared_data_load_path + '.pkl';
         elif os.path.exists(rf_model_path):
             with open(rf_model_path, 'rb') as f:
                 model = pickle.load(f)
+
+            shared_data_load_path = shared_data_load_path + '.dat.pkl';
             print(f'Loaded RF pickle model {rf_model_path} from disk')
         else:
             print(f"Error: Model file not found at either {model_load_path} or {rf_model_path}")
@@ -46,7 +52,7 @@ def load_model_files(model_path, data_name, data_dir):
 
     if lag is not None and 'randForest' in model_path:
         X_test_lag, y_test_lag = randomForest.create_lag(lag, test_data)
-        test_seq = X_test_lag
+        test_seq   = X_test_lag
         test_label = testing_data[features[0]][lag:]
     elif seq_length is not None and 'randForest' not in model_path:
         test_seq, test_label = dataset.create_sequence(test_data, seq_length)
@@ -71,6 +77,7 @@ def test_main(model_path, data_name, data_dir):
     # put the predictions in the correct column (assuming we're predicting Close)
     with open(model_path + '.pkl', "rb") as f:
         shared_data = pickle.load(f)
+
     features = shared_data["features"]
 
     # only selecting the 'Close' feature
@@ -110,8 +117,8 @@ def test_main(model_path, data_name, data_dir):
 
 def compare_main(model_paths, data_name, data_dir):
     # List to store all model predictions and their names
-    predictions = []
-    model_names = []
+    predictions  = []
+    model_names  = []
     longest_path = 0
 
     # Load each model and get its predictions
@@ -122,6 +129,7 @@ def compare_main(model_paths, data_name, data_dir):
         # Load features from shared data
         with open(model_path + '.pkl', "rb") as f:
             shared_data = pickle.load(f)
+
         features = shared_data["features"]
 
         # Only selecting the 'Close' feature
@@ -130,6 +138,7 @@ def compare_main(model_paths, data_name, data_dir):
         # Correctly sizing the pred and label test arrays
         dummy_pred_array = np.zeros((test_pred.shape[0], len(features)))
         dummy_pred_array[:, target_feature_index] = test_pred.flatten()
+        
         test_inv_pred = scaler.inverse_transform(dummy_pred_array)
         test_inv_pred = test_inv_pred[:, target_feature_index].reshape(-1, 1)
 
