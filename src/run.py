@@ -1,5 +1,5 @@
 import argparse
-from ece6254 import train, test, dataset, models, dataset_yfinance
+from ece6254 import train, test, dataset, models, dataset_yfinance, export
 
 def run_main():
     parser = argparse.ArgumentParser(description='CLI interface for training and testing models.')
@@ -16,7 +16,7 @@ def run_main():
     train_parser.add_argument('-s', '--seq_length', type=int, default=20, help='Sequence length for training')
     train_parser.add_argument('-e', '--epochs', type=int, default=80, help='Number of epochs')
     train_parser.add_argument('-t', '--tune', type=int, default=50, help='Number of epocs to train hyperparams, only if model supports it')
-    train_parser.add_argument('-l', '--lag', type=int, default=5, help='Only for Random Forest: how many previous data pts considered for predicting new data pt')
+    train_parser.add_argument('-l', '--lag', type=int, default=None, help='Only for Random Forest: how many previous data pts considered for predicting new data pt')
 
     # Test command
     test_parser = subparsers.add_parser('test', help='Test a model')
@@ -51,6 +51,11 @@ def run_main():
     dataset_list_parser.add_argument('-p', '--path', type=str, default="./dataset", help='Path to dataset dir, defaults to ./dataset')
     dataset_list_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
 
+    # Export chart command
+    export_parser = subparsers.add_parser('export', help='Generate plots')
+    export_parser.add_argument('-m', '--models_dir', type=str, default="./models", help='')
+    export_parser.add_argument('-o', '--output_dir', type=str, default="./", help='')
+
     args = parser.parse_args()
 
     if args.command == 'train':
@@ -83,6 +88,8 @@ def run_main():
     elif args.command == 'dataset_list':
         data_dir = "./yfinance_dataset" if args.data_source == 'yfinance' else args.path
         dataset.print_dataset_list(data_dir)
+    elif args.command == 'export':
+        export.export_main(args.models_dir, args.output_dir)
     else:
         parser.print_help()
 
