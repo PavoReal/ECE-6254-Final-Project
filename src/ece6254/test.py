@@ -5,6 +5,7 @@ import pickle
 import pandas as pd
 import numpy as np
 from ece6254 import randomForest
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from . import dataset
 
@@ -104,6 +105,10 @@ def compare_main(model_paths, data_name, data_dir):
     # List to store all model predictions and their names
     predictions  = []
     model_names  = []
+    mseVec = []
+    maeVec = []
+    rmseVec = []
+    accuVec = []
     longest_path = 0
 
     # Load each model and get its predictions
@@ -131,6 +136,15 @@ def compare_main(model_paths, data_name, data_dir):
         model_names.append(os.path.basename(model_path))
         longest_path = max(longest_path, len(model_path))
 
+        mse, mae, rmse, acc = model_evaluation(test_inv_pred, test_inv_label)
+        mseVec.append(mse)
+        maeVec.append(mae)
+        rmseVec.append(rmse)
+        accuVec.append(acc)
+
+    # plotting model evaluation stats
+    plot_model_evaluation(model_names, mseVec, maeVec, rmseVec, accuVec)
+
     # Plot setup
     plt.figure(figsize=(12,6))
     
@@ -154,4 +168,52 @@ def compare_main(model_paths, data_name, data_dir):
     os.makedirs('./figures', exist_ok=True)
     plt.savefig(filename)
 
+    plt.show()
+
+def model_evaluation(prediction, test):
+    accuracy = 0
+    datapts_total = prediction.shape[0]
+
+    for i in range(1, datapts_total):
+        if ((prediction[i] - prediction[i - 1])* (test[i] - test[i - 1])) > 0:
+            accuracy += 1
+
+    accuracy_perc = (accuracy/datapts_total)*100
+
+    meanSqErr = mean_squared_error(test, prediction)
+    meanAbsErr = mean_absolute_error(test, prediction)
+    rmse = np.sqrt(mean_squared_error)
+
+    return meanSqErr, meanAbsErr, rmse, accuracy_perc
+
+def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec, accuracyPerc):
+    n_models = len(modelNames)
+    x = np.arange(n_models)
+    width = 0.2
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    rects1 = ax.bar(x - 1.5*width, maeVec, width, label='MAE')
+    rects2 = ax.bar(x - 0.5*width, mseVec, width, label='MSE')
+    rects3 = ax.bar(x + 0.5*width, rmseVec, width, label='RMSE')
+    rects4 = ax.bar(x + 1.5*width, accuracyPerc, width, label='Accuracy (%)')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Error/Accuracy Value')
+    ax.set_title('Comparison of Model Performance Metrics')
+    ax.set_xticks(x)
+    ax.set_xticklabels(modelNames)
+    ax.legend()
+
+    ax.bar_label(rects1, fmt='%.2f', padding=3)
+    ax.bar_label(rects2, fmt='%.2f', padding=3)
+    ax.bar_label(rects3, fmt='%.2f', padding=3)
+    ax.bar_label(rects4, fmt='%.2f', padding=3)
+
+    fig.tight_layout()
+    plt.figure(figsize=(12,6))
+
+    # Create filename from all model names
+    filename = f'modelEvalStats.png'
+    os.makedirs('./figures', exist_ok=True)
+    plt.savefig(filename)
     plt.show()
