@@ -303,7 +303,6 @@ def plot_model_accuracy(model_names, accuracy):
     ax.set_title('Comparison of Model Accuracy (Ordered by Complexity)')
     ax.set_xticks(x)
     ax.set_xticklabels(model_names, rotation=45, ha='right')  # Rotate labels
-    ax.legend()
 
     # Add labels with better formatting
     def autolabel(rects):
