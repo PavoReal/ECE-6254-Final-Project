@@ -136,14 +136,14 @@ def compare_main(model_paths, data_name, data_dir):
         model_names.append(os.path.basename(model_path))
         longest_path = max(longest_path, len(model_path))
 
-        mse, mae, rmse, acc = model_evaluation(test_inv_pred, test_inv_label)
+        mse, mae, rmse, acc = model_evaluation(dummy_pred_array, test_label)
         mseVec.append(mse)
         maeVec.append(mae)
         rmseVec.append(rmse)
-        accuVec.append(acc)
+        #accuVec.append(acc)
 
     # plotting model evaluation stats
-    plot_model_evaluation(model_names, mseVec, maeVec, rmseVec, accuVec)
+    plot_model_evaluation(model_names, mseVec, maeVec, rmseVec, 0)
 
     # Plot setup
     plt.figure(figsize=(12,6))
@@ -156,15 +156,15 @@ def compare_main(model_paths, data_name, data_dir):
     
     for i, (pred, name) in enumerate(zip(predictions, model_names)):
         color = colors[i % len(colors)]
-        plt.plot(pred, color=color, label=f'{name.ljust(longest_path)} Predicted Close Price')
+        plt.plot(pred, color=color, label=f'{name.ljust(longest_path)}', linewidth=0.75)
 
-    plt.title(f'Close Price Prediction {data_name}')
-    plt.xlabel('Time')
+    plt.title(f'{data_name} Close Price')
+    plt.xlabel('')
     plt.ylabel('Close Price')
     plt.legend()
 
     # Create filename from all model names
-    filename = f'./figures/compare-{"-".join(model_names)}-{data_name}.png'
+    filename = f'./figures/compare-{"-".join(model_names)}-{data_name}.svg'
     os.makedirs('./figures', exist_ok=True)
     plt.savefig(filename)
 
@@ -182,7 +182,7 @@ def model_evaluation(prediction, test):
 
     meanSqErr = mean_squared_error(test, prediction)
     meanAbsErr = mean_absolute_error(test, prediction)
-    rmse = np.sqrt(mean_squared_error)
+    rmse = np.sqrt(meanSqErr)
 
     return meanSqErr, meanAbsErr, rmse, accuracy_perc
 
