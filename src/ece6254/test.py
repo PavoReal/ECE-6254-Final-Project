@@ -182,7 +182,7 @@ def model_evaluation(prediction, test):
 
     meanSqErr = mean_squared_error(test, prediction)
     meanAbsErr = mean_absolute_error(test, prediction)
-    rmse = np.sqrt(mean_squared_error)
+    rmse = np.sqrt(meanSqErr)
 
     return meanSqErr, meanAbsErr, rmse, accuracy_perc
 
