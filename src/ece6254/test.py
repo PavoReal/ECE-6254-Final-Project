@@ -140,10 +140,10 @@ def compare_main(model_paths, data_name, data_dir):
         mseVec.append(mse)
         maeVec.append(mae)
         rmseVec.append(rmse)
-        #accuVec.append(acc)
+        accuVec.append(acc)
 
     # plotting model evaluation stats
-    plot_model_evaluation(model_names, mseVec, maeVec, rmseVec, 0)
+    plot_model_evaluation(model_names, mseVec, maeVec, rmseVec)
 
     # Plot setup
     plt.figure(figsize=(12,6))
@@ -186,7 +186,7 @@ def model_evaluation(prediction, test):
 
     return meanSqErr, meanAbsErr, rmse, accuracy_perc
 
-def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec, accuracyPerc):
+def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
     n_models = len(modelNames)
     x = np.arange(n_models)
     width = 0.2
@@ -195,7 +195,7 @@ def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec, accuracyPerc):
     rects1 = ax.bar(x - 1.5*width, maeVec, width, label='MAE')
     rects2 = ax.bar(x - 0.5*width, mseVec, width, label='MSE')
     rects3 = ax.bar(x + 0.5*width, rmseVec, width, label='RMSE')
-    rects4 = ax.bar(x + 1.5*width, accuracyPerc, width, label='Accuracy (%)')
+    # rects4 = ax.bar(x + 1.5*width, accuracyPerc, width, label='Accuracy (%)')
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('Error/Accuracy Value')
@@ -207,7 +207,7 @@ def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec, accuracyPerc):
     ax.bar_label(rects1, fmt='%.2f', padding=3)
     ax.bar_label(rects2, fmt='%.2f', padding=3)
     ax.bar_label(rects3, fmt='%.2f', padding=3)
-    ax.bar_label(rects4, fmt='%.2f', padding=3)
+    # ax.bar_label(rects4, fmt='%.2f', padding=3)
 
     fig.tight_layout()
     plt.figure(figsize=(12,6))
