@@ -191,7 +191,45 @@ def model_evaluation(prediction, test):
 
     return meanSqErr, meanAbsErr, rmse
 
+def get_model_complexity_order():
+    """Returns the order of models from least to most complex"""
+    return {
+        'randforest': 0,
+        'lstm1d': 1,
+        'ann': 2,
+        'lstm2d': 3,
+        'lstm3d': 4,
+        'lstm-garo': 5,
+        'lstm-garo-large': 6
+    }
+
+def sort_models_by_complexity(model_names, metrics):
+    """Sort models and their corresponding metrics by complexity"""
+    complexity_order = get_model_complexity_order()
+    
+    # Create list of tuples (model_name, metric, complexity)
+    model_metric_pairs = []
+    for name, metric in zip(model_names, metrics):
+        # Extract base model name (remove any prefixes or suffixes)
+        base_name = name.lower().split('/')[-1].split('.')[0]
+        complexity = complexity_order.get(base_name, 999)  # Default high complexity if not found
+        model_metric_pairs.append((name, metric, complexity))
+    
+    # Sort by complexity
+    sorted_pairs = sorted(model_metric_pairs, key=lambda x: x[2])
+    
+    # Unpack sorted results
+    sorted_names = [pair[0] for pair in sorted_pairs]
+    sorted_metrics = [pair[1] for pair in sorted_pairs]
+    
+    return sorted_names, sorted_metrics
+
 def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
+    # Sort models and metrics by complexity
+    modelNames, mseVec = sort_models_by_complexity(modelNames, mseVec)
+    modelNames, maeVec = sort_models_by_complexity(modelNames, maeVec)
+    modelNames, rmseVec = sort_models_by_complexity(modelNames, rmseVec)
+    
     n_models = len(modelNames)
     x = np.arange(n_models)
     width = 0.25  # Reduced width for better spacing
@@ -203,7 +241,7 @@ def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
 
     # Add labels and title
     ax.set_ylabel('Error Value')
-    ax.set_title('Comparison of Model Performance Metrics')
+    ax.set_title('Comparison of Model Performance Metrics (Ordered by Complexity)')
     ax.set_xticks(x)
     ax.set_xticklabels(modelNames, rotation=45, ha='right')  # Rotate labels
     ax.legend()
@@ -250,6 +288,9 @@ def model_accuracy(prediction_inv, test_inv):
     return accuracy_perc
 
 def plot_model_accuracy(model_names, accuracy):
+    # Sort models and accuracy by complexity
+    model_names, accuracy = sort_models_by_complexity(model_names, accuracy)
+    
     n_models = len(model_names)
     x = np.arange(n_models)
     width = 0.6  # Wider bars for better visibility
@@ -259,7 +300,7 @@ def plot_model_accuracy(model_names, accuracy):
 
     ax.set_ylabel('Accuracy (%)')
     ax.set_xlabel('Models')
-    ax.set_title('Comparison of Model Accuracy')
+    ax.set_title('Comparison of Model Accuracy (Ordered by Complexity)')
     ax.set_xticks(x)
     ax.set_xticklabels(model_names, rotation=45, ha='right')  # Rotate labels
     ax.legend()
