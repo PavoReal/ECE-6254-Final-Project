@@ -114,7 +114,7 @@ def compare_main(model_paths, data_name, data_dir):
     # Load each model and get its predictions
     for model_path in model_paths:
         model, test_data, test_seq, test_label, scaler, shared_data = load_model_files(model_path, data_name, data_dir)
-        
+
         test_pred = model.predict(test_seq)
 
         features = shared_data["features"]
@@ -208,6 +208,8 @@ def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
     ax.bar_label(rects2, fmt='%.2f', padding=3)
     ax.bar_label(rects3, fmt='%.2f', padding=3)
     # ax.bar_label(rects4, fmt='%.2f', padding=3)
+
+    ax.set_yscale('log')
 
     fig.tight_layout()
     plt.figure(figsize=(12,6))
