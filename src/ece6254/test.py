@@ -136,14 +136,19 @@ def compare_main(model_paths, data_name, data_dir):
         model_names.append(os.path.basename(model_path))
         longest_path = max(longest_path, len(model_path))
 
-        mse, mae, rmse, acc = model_evaluation(dummy_pred_array, test_label)
+        mse, mae, rmse = model_evaluation(dummy_pred_array, test_label)
+        accuracy = model_accuracy(test_inv_pred, test_inv_label)
+
         mseVec.append(mse)
         maeVec.append(mae)
         rmseVec.append(rmse)
-        accuVec.append(acc)
+        accuVec.append(accuracy)
 
     # plotting model evaluation stats
     plot_model_evaluation(model_names, mseVec, maeVec, rmseVec)
+
+    # plot model accuracy
+    plot_model_accuracy(model_names, accuVec)
 
     # Plot setup
     plt.figure(figsize=(12,6))
@@ -184,7 +189,7 @@ def model_evaluation(prediction, test):
     meanAbsErr = mean_absolute_error(test, prediction)
     rmse = np.sqrt(meanSqErr)
 
-    return meanSqErr, meanAbsErr, rmse, accuracy_perc
+    return meanSqErr, meanAbsErr, rmse
 
 def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
     n_models = len(modelNames)
@@ -216,6 +221,52 @@ def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
 
     # Create filename from all model names
     filename = f'modelEvalStats.png'
+    os.makedirs('./figures', exist_ok=True)
+    plt.savefig(filename)
+    plt.show()
+
+def model_accuracy(prediction_inv, test_inv):
+    accuracy = 0
+    datapts_total = prediction_inv.shape[0]
+
+    for i in range(1, datapts_total):
+        if ((prediction_inv[i] - prediction_inv[i - 1])* (test_inv[i] - test_inv[i - 1])) > 0:
+            accuracy += 1
+
+    accuracy_perc = (accuracy/datapts_total)*100
+    return accuracy_perc
+
+def plot_model_accuracy(model_names, accuracy):
+    n_models = len(model_names)
+    x = np.arange(n_models)
+    width = 0.2
+
+    fig, ax = plt.subplots(figsize=(10, 6)) 
+    rects = ax.bar(x, accuracy, width, label='Accuracy')
+
+    ax.set_ylabel('Accuracy (%)')
+    ax.set_xlabel('Models')
+    ax.set_title('Comparison of Model Accuracy')
+    ax.set_xticks(x)
+    ax.set_xticklabels(model_names)
+    ax.legend()
+
+    # Add labels to the top of each bar
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate(f'{height:.2f}',
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3), 
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+
+    autolabel(rects)
+
+    fig.tight_layout()
+
+    # Create filename from all model names
+    filename = f'modelAccuracy.png'
     os.makedirs('./figures', exist_ok=True)
     plt.savefig(filename)
     plt.show()
