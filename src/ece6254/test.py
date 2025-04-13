@@ -194,35 +194,48 @@ def model_evaluation(prediction, test):
 def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
     n_models = len(modelNames)
     x = np.arange(n_models)
-    width = 0.2
+    width = 0.25  # Reduced width for better spacing
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    rects1 = ax.bar(x - 1.5*width, maeVec, width, label='MAE')
-    rects2 = ax.bar(x - 0.5*width, mseVec, width, label='MSE')
-    rects3 = ax.bar(x + 0.5*width, rmseVec, width, label='RMSE')
-    # rects4 = ax.bar(x + 1.5*width, accuracyPerc, width, label='Accuracy (%)')
+    fig, ax = plt.subplots(figsize=(12, 8))  # Increased figure size
+    rects1 = ax.bar(x - width, maeVec, width, label='MAE')
+    rects2 = ax.bar(x, mseVec, width, label='MSE')
+    rects3 = ax.bar(x + width, rmseVec, width, label='RMSE')
 
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Error/Accuracy Value')
+    # Add labels and title
+    ax.set_ylabel('Error Value')
     ax.set_title('Comparison of Model Performance Metrics')
     ax.set_xticks(x)
-    ax.set_xticklabels(modelNames)
+    ax.set_xticklabels(modelNames, rotation=45, ha='right')  # Rotate labels
     ax.legend()
 
-    ax.bar_label(rects1, fmt='%.2f', padding=3)
-    ax.bar_label(rects2, fmt='%.2f', padding=3)
-    ax.bar_label(rects3, fmt='%.2f', padding=3)
-    # ax.bar_label(rects4, fmt='%.2f', padding=3)
+    # Function to add labels with better formatting
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            # Format numbers to be more concise
+            if height >= 1000:
+                label = f'{height/1000:.1f}k'
+            elif height >= 1:
+                label = f'{height:.1f}'
+            else:
+                label = f'{height:.3f}'
+            ax.annotate(label,
+                       xy=(rect.get_x() + rect.get_width()/2, height),
+                       xytext=(0, 3),  # 3 points vertical offset
+                       textcoords="offset points",
+                       ha='center', va='bottom')
+
+    autolabel(rects1)
+    autolabel(rects2)
+    autolabel(rects3)
 
     ax.set_yscale('log')
+    plt.tight_layout()  # Adjust layout to prevent label cutoff
 
-    fig.tight_layout()
-    plt.figure(figsize=(12,6))
-
-    # Create filename from all model names
-    filename = f'modelEvalStats.png'
+    # Save the figure
+    filename = f'./figures/modelEvalStats.png'
     os.makedirs('./figures', exist_ok=True)
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches='tight', dpi=300)
     plt.show()
 
 def model_accuracy(prediction_inv, test_inv):
@@ -239,34 +252,34 @@ def model_accuracy(prediction_inv, test_inv):
 def plot_model_accuracy(model_names, accuracy):
     n_models = len(model_names)
     x = np.arange(n_models)
-    width = 0.2
+    width = 0.6  # Wider bars for better visibility
 
-    fig, ax = plt.subplots(figsize=(10, 6)) 
+    fig, ax = plt.subplots(figsize=(10, 6))
     rects = ax.bar(x, accuracy, width, label='Accuracy')
 
     ax.set_ylabel('Accuracy (%)')
     ax.set_xlabel('Models')
     ax.set_title('Comparison of Model Accuracy')
     ax.set_xticks(x)
-    ax.set_xticklabels(model_names)
+    ax.set_xticklabels(model_names, rotation=45, ha='right')  # Rotate labels
     ax.legend()
 
-    # Add labels to the top of each bar
+    # Add labels with better formatting
     def autolabel(rects):
         for rect in rects:
             height = rect.get_height()
-            ax.annotate(f'{height:.2f}',
-                        xy=(rect.get_x() + rect.get_width() / 2, height),
-                        xytext=(0, 3), 
-                        textcoords="offset points",
-                        ha='center', va='bottom')
+            ax.annotate(f'{height:.1f}%',
+                       xy=(rect.get_x() + rect.get_width()/2, height),
+                       xytext=(0, 3),  # 3 points vertical offset
+                       textcoords="offset points",
+                       ha='center', va='bottom')
 
     autolabel(rects)
 
-    fig.tight_layout()
+    plt.tight_layout()  # Adjust layout to prevent label cutoff
 
-    # Create filename from all model names
-    filename = f'modelAccuracy.png'
+    # Save the figure
+    filename = f'./figures/modelAccuracy.png'
     os.makedirs('./figures', exist_ok=True)
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches='tight', dpi=300)
     plt.show()
