@@ -4,6 +4,7 @@ import glob, os
 import pickle
 import pandas as pd
 import numpy as np
+import csv
 from ece6254 import randomForest
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
@@ -174,6 +175,15 @@ def compare_main(model_paths, data_name, data_dir):
     plt.savefig(filename)
 
     plt.show()
+
+    # Save metrics to CSV
+    metrics_file = f'./figures/modelEvalStats.csv'
+    with open(metrics_file, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Model Name', 'MAE', 'MSE', 'RMSE', 'Accuracy'])
+        for name, mse, mae, rmse, accuracy in zip(model_names, mseVec, maeVec, rmseVec, accuVec):
+            writer.writerow([name, mae, mse, rmse, accuracy])
+    print(f'Comparison results saved to {metrics_file}')
 
 def model_evaluation(prediction, test):
     accuracy = 0
