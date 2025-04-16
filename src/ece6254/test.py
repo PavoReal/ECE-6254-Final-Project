@@ -4,6 +4,8 @@ import os
 import pickle
 import pandas as pd
 import numpy as np
+import csv
+from ece6254 import randomForest
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from . import dataset
@@ -84,6 +86,12 @@ def test_main(model_path, data_name, data_dir):
     dummy_pred_array = np.zeros((test_pred.shape[0], len(features)))
     dummy_pred_array[:, target_feature_index] = test_pred.flatten()
 
+    test_inv_pred = scaler.inverse_transform(dummy_pred_array)
+    test_inv_pred = test_inv_pred[:, target_feature_index].reshape(-1, 1)
+
+    # correctly sizing the pred and label test arrays
+    dummy_pred_array = np.zeros((test_pred.shape[0], len(features)))
+    dummy_pred_array[:, target_feature_index] = test_pred.flatten()
     test_inv_pred = scaler.inverse_transform(dummy_pred_array)
     test_inv_pred = test_inv_pred[:, target_feature_index].reshape(-1, 1)
 
@@ -198,6 +206,14 @@ def compare_main(model_paths, data_name, data_dir):
             plt.savefig(base_save_dir + filename)
 
             #plt.show()
+
+            # Save metrics to CSV
+            metrics_file = f'modelEvalStats.csv'
+            with open(base_save_dir + metrics_file, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(['Model Name', 'MAE', 'MSE', 'RMSE', 'Accuracy'])
+                for name, mse, mae, rmse, accuracy in zip(model_names, mseVec, maeVec, rmseVec, accuVec):
+                    writer.writerow([name, mae, mse, rmse, accuracy])
 
 def model_evaluation(prediction, test):
     accuracy = 0
