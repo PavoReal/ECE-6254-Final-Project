@@ -4,10 +4,10 @@ import glob, os
 import pickle
 import pandas as pd
 import numpy as np
-from ece6254 import randomForest
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from . import dataset
+from . import randomForest
 
 def load_model_files(model_path, data_name, data_dir):
     ignored, dataset_load_path = dataset.get_dataset_files(data_name, data_dir)
@@ -31,10 +31,10 @@ def load_model_files(model_path, data_name, data_dir):
             print(f'Loaded RF pickle model {rf_model_path} from disk')
         else:
             print(f"Error: Model file not found at either {model_load_path} or {rf_model_path}")
-            return None, None, None, None, None
+            return None, None, None, None, None, None, None
     except Exception as e:
         print(f"Error loading model: {e}")
-        return None, None, None, None, None
+        return None, None, None, None, None, None, None
 
     testing_data = pd.read_csv(dataset_load_path)
 
@@ -53,16 +53,18 @@ def load_model_files(model_path, data_name, data_dir):
         X_test_lag, y_test_lag = randomForest.create_lag(lag, test_data)
         test_seq   = X_test_lag
         test_label = testing_data[features[0]][lag:].values.reshape(-1, 1)
+        test_dates = pd.to_datetime(testing_data['Date'][lag:]).values
     elif seq_length is not None and 'randForest' not in model_path:
         test_seq, test_label = dataset.create_sequence(test_data, seq_length)
+        test_dates = pd.to_datetime(testing_data['Date'][seq_length:]).values
     else:
         raise ValueError("Error: Inconsistent or missing sequence/lag information for the model type.")
     
     print(f'Loaded shared data {shared_data_load_path} from disk')
-    return model, test_data, test_seq, test_label, scaler, shared_data
+    return model, test_data, test_seq, test_label, scaler, shared_data, test_dates
 
 def test_main(model_path, data_name, data_dir):
-    model, test_data, test_seq, test_label, scaler, shared_data = load_model_files(model_path, data_name, data_dir)
+    model, test_data, test_seq, test_label, scaler, shared_data, test_dates = load_model_files(model_path, data_name, data_dir)
 
     test_pred = model.predict(test_seq)
 
@@ -86,8 +88,8 @@ def test_main(model_path, data_name, data_dir):
 
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))
-    plt.plot(test_inv_label, color='blue', label='Actual Close Price')
-    plt.plot(test_inv_pred, color='red', label='Predicted Close Price')
+    plt.plot(test_dates, test_inv_label, color='blue', label='Actual Close Price')
+    plt.plot(test_dates, test_inv_pred, color='red', label='Predicted Close Price')
     plt.title(f'Close Price Prediction {data_name}')
     plt.xlabel('Time')
     plt.ylabel('Close Price')
@@ -102,6 +104,11 @@ def test_main(model_path, data_name, data_dir):
     plt.show()
 
 def compare_main(model_paths, data_name, data_dir):
+
+    _, test_file_path = dataset.get_dataset_files(data_name, data_dir)
+    testing_data = pd.read_csv(test_file_path)
+    test_dates_full = pd.to_datetime(testing_data['Date']).values
+    test_close_full = testing_data['Close'].values
     # List to store all model predictions and their names
     predictions  = []
     model_names  = []
@@ -113,7 +120,7 @@ def compare_main(model_paths, data_name, data_dir):
 
     # Load each model and get its predictions
     for model_path in model_paths:
-        model, test_data, test_seq, test_label, scaler, shared_data = load_model_files(model_path, data_name, data_dir)
+        model, test_data, test_seq, test_label, scaler, shared_data, test_dates = load_model_files(model_path, data_name, data_dir)
 
         test_pred = model.predict(test_seq)
 
@@ -132,7 +139,8 @@ def compare_main(model_paths, data_name, data_dir):
         test_inv_label = scaler.inverse_transform(test_label)
         test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
         
-        predictions.append(test_inv_pred)
+        predictions.append((test_dates, test_inv_pred))
+
         model_names.append(os.path.basename(model_path))
         longest_path = max(longest_path, len(model_path))
 
@@ -154,14 +162,15 @@ def compare_main(model_paths, data_name, data_dir):
     plt.figure(figsize=(12,6))
     
     # Plot actual values (using the last test_inv_label since they're all the same)
-    plt.plot(test_inv_label, color='blue', label='Actual Close Price')
+    plt.plot(test_dates_full, test_close_full, color='blue', label='Actual Close Price')
     
     # Define a color map for predictions
     colors = ['red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
     
-    for i, (pred, name) in enumerate(zip(predictions, model_names)):
-        color = colors[i % len(colors)]
-        plt.plot(pred, color=color, label=f'{name.ljust(longest_path)}', linewidth=0.75)
+    for i, ((dates, pred), name) in enumerate(zip(predictions, model_names)):
+        color = colors[i % len(colors)];
+
+        plt.plot(dates, pred, color=color, label=f'{name.ljust(longest_path)}', linewidth=0.75)
 
     plt.title(f'{data_name} Close Price')
     plt.xlabel('')
@@ -261,7 +270,7 @@ def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
                        xy=(rect.get_x() + rect.get_width()/2, height),
                        xytext=(0, 3),  # 3 points vertical offset
                        textcoords="offset points",
-                       ha='center', va='bottom')
+                       ha='center', va='bottom', fontsize=9)
 
     autolabel(rects1)
     autolabel(rects2)
