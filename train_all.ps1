@@ -8,5 +8,5 @@
 
 #python .\src\run.py compare -m .\models_kaggle\ann .\models_kaggle\lstm-garo-large .\models_kaggle\randForest .\models_kaggle\lstm-garo .\models_kaggle\lstm1d .\models_kaggle\lstm2d .\models_kaggle\lstm3d -d SPY --data_source kaggle
 #python .\src\run.py compare -m .\models_kaggle\ann .\models_kaggle\lstm-garo-large .\models_kaggle\randForest .\models_kaggle\lstm-garo .\models_kaggle\lstm1d .\models_kaggle\lstm2d .\models_kaggle\lstm3d -d SPY --data_source yfinance
-python .\src\run.py compare -m .\models\ann .\models\lstm-garo-large .\models\randForest  .\models\lstm-garo .\models\lstm1d .\models\lstm2d .\models\lstm3d -d SPY --data_source kaggle
-python .\src\run.py compare -m .\models\ann .\models\lstm-garo-large .\models\randForest  .\models\lstm-garo .\models\lstm1d .\models\lstm2d .\models\lstm3d -d SPY --data_source yfinance
+python .\src\run.py compare -m .\models\ann .\models\lstm-garo-large .\models\randForest  .\models\lstm-garo .\models\lstm1d .\models\lstm2d .\models\lstm3d -d SPY INTC --data_source kaggle
+python .\src\run.py compare -m .\models\ann .\models\lstm-garo-large .\models\randForest  .\models\lstm-garo .\models\lstm1d .\models\lstm2d .\models\lstm3d -d SPY INTC --data_source yfinance

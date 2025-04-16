@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import glob, os
+import os
 import pickle
 import pandas as pd
 import numpy as np
@@ -9,9 +9,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from . import dataset
 from . import randomForest
 
-def load_model_files(model_path, data_name, data_dir):
-    ignored, dataset_load_path = dataset.get_dataset_files(data_name, data_dir)
-
+def load_model_files(model_path):
     model_load_path       = model_path + '.keras'
     shared_data_load_path = model_path;
     rf_model_path         = model_path + '.pkl'
@@ -31,16 +29,22 @@ def load_model_files(model_path, data_name, data_dir):
             print(f'Loaded RF pickle model {rf_model_path} from disk')
         else:
             print(f"Error: Model file not found at either {model_load_path} or {rf_model_path}")
-            return None, None, None, None, None, None, None
+            return None, None
     except Exception as e:
         print(f"Error loading model: {e}")
-        return None, None, None, None, None, None, None
-
-    testing_data = pd.read_csv(dataset_load_path)
+        return None, None
 
     # Load shared data
     with open(shared_data_load_path, "rb") as f:
         shared_data = pickle.load(f)
+    print(f'Loaded shared data {shared_data_load_path} from disk')
+
+    return model, shared_data;
+
+def load_data_files(data_name, data_dir, shared_data, is_random_forest):
+    _, dataset_load_path = dataset.get_dataset_files(data_name, data_dir)
+
+    testing_data = pd.read_csv(dataset_load_path)
 
     features   = shared_data["features"]
     scaler     = shared_data["scaler"]
@@ -49,22 +53,25 @@ def load_model_files(model_path, data_name, data_dir):
     
     test_data  = scaler.transform(testing_data[features])
 
-    if lag is not None and 'randForest' in model_path:
+    test_dates_full = pd.to_datetime(testing_data['Date']).values;
+    test_close_full = testing_data['Close'].values;
+
+    if lag is not None and is_random_forest:
         X_test_lag, y_test_lag = randomForest.create_lag(lag, test_data)
         test_seq   = X_test_lag
         test_label = testing_data[features[0]][lag:].values.reshape(-1, 1)
         test_dates = pd.to_datetime(testing_data['Date'][lag:]).values
-    elif seq_length is not None and 'randForest' not in model_path:
+    elif seq_length is not None and not is_random_forest:
         test_seq, test_label = dataset.create_sequence(test_data, seq_length)
         test_dates = pd.to_datetime(testing_data['Date'][seq_length:]).values
     else:
         raise ValueError("Error: Inconsistent or missing sequence/lag information for the model type.")
     
-    print(f'Loaded shared data {shared_data_load_path} from disk')
-    return model, test_data, test_seq, test_label, scaler, shared_data, test_dates
+    return test_data, test_seq, test_label, scaler, test_dates, test_dates_full, test_close_full
 
 def test_main(model_path, data_name, data_dir):
-    model, test_data, test_seq, test_label, scaler, shared_data, test_dates = load_model_files(model_path, data_name, data_dir)
+    model, shared_data = load_model_files(model_path);
+    test_data, test_seq, test_label, scaler, test_dates, _, _ = load_data_files(data_name, data_dir, shared_data, ("randForest" in model_path));
 
     test_pred = model.predict(test_seq)
 
@@ -83,9 +90,6 @@ def test_main(model_path, data_name, data_dir):
     test_inv_label = scaler.inverse_transform(test_label)
     test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
 
-    # Xkcd style, cool kids only
-    #plt.xkcd()
-
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))
     plt.plot(test_dates, test_inv_label, color='blue', label='Actual Close Price')
@@ -100,89 +104,100 @@ def test_main(model_path, data_name, data_dir):
     os.makedirs(save_dir, exist_ok=True)
 
     plt.savefig(f'{save_dir}/predictions-{os.path.basename(model_path)}-{data_name}.png')
-
     plt.show()
 
 def compare_main(model_paths, data_name, data_dir):
-
-    _, test_file_path = dataset.get_dataset_files(data_name, data_dir)
-    testing_data = pd.read_csv(test_file_path)
-    test_dates_full = pd.to_datetime(testing_data['Date']).values
-    test_close_full = testing_data['Close'].values
-    # List to store all model predictions and their names
-    predictions  = []
-    model_names  = []
-    mseVec = []
-    maeVec = []
-    rmseVec = []
-    accuVec = []
-    longest_path = 0
-
     # Load each model and get its predictions
     for model_path in model_paths:
-        model, test_data, test_seq, test_label, scaler, shared_data, test_dates = load_model_files(model_path, data_name, data_dir)
+        model, shared_data = load_model_files(model_path);
 
-        test_pred = model.predict(test_seq)
+        model_basename = os.path.basename(model_path);
 
-        features = shared_data["features"]
+        model_is_random_forest = ("randForest" in model_path);
 
-        # Only selecting the 'Close' feature
-        target_feature_index = features.index('Close') if 'Close' in features else 0
+        # List to store all model predictions and their names
+        predictions  = []
+        model_names  = []
+        mseVec       = []
+        maeVec       = []
+        rmseVec      = []
+        accuVec      = []
+        longest_path = 0
 
-        # Correctly sizing the pred and label test arrays
-        dummy_pred_array = np.zeros((test_pred.shape[0], len(features)))
-        dummy_pred_array[:, target_feature_index] = test_pred.flatten()
-        
-        test_inv_pred = scaler.inverse_transform(dummy_pred_array)
-        test_inv_pred = test_inv_pred[:, target_feature_index].reshape(-1, 1)
+        for ticker in data_name:
+            predictions  = []
+            model_names  = []
+            mseVec       = []
+            maeVec       = []
+            rmseVec      = []
+            accuVec      = []
+            longest_path = 0
 
-        test_inv_label = scaler.inverse_transform(test_label)
-        test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
-        
-        predictions.append((test_dates, test_inv_pred))
+            test_data, test_seq, test_label, scaler, test_dates, test_dates_full, test_close_full = load_data_files(ticker, data_dir, shared_data, model_is_random_forest);
 
-        model_names.append(os.path.basename(model_path))
-        longest_path = max(longest_path, len(model_path))
+            test_pred = model.predict(test_seq)
 
-        mse, mae, rmse = model_evaluation(dummy_pred_array, test_label)
-        accuracy = model_accuracy(test_inv_pred, test_inv_label)
+            features = shared_data["features"]
 
-        mseVec.append(mse)
-        maeVec.append(mae)
-        rmseVec.append(rmse)
-        accuVec.append(accuracy)
+            # Only selecting the 'Close' feature
+            target_feature_index = features.index('Close') if 'Close' in features else 0
 
-    # plotting model evaluation stats
-    plot_model_evaluation(model_names, mseVec, maeVec, rmseVec)
+            # Correctly sizing the pred and label test arrays
+            dummy_pred_array = np.zeros((test_pred.shape[0], len(features)))
+            dummy_pred_array[:, target_feature_index] = test_pred.flatten()
+            
+            test_inv_pred = scaler.inverse_transform(dummy_pred_array)
+            test_inv_pred = test_inv_pred[:, target_feature_index].reshape(-1, 1)
 
-    # plot model accuracy
-    plot_model_accuracy(model_names, accuVec)
+            test_inv_label = scaler.inverse_transform(test_label)
+            test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
+            
+            predictions.append((test_dates, test_inv_pred))
 
-    # Plot setup
-    plt.figure(figsize=(12,6))
-    
-    # Plot actual values (using the last test_inv_label since they're all the same)
-    plt.plot(test_dates_full, test_close_full, color='blue', label='Actual Close Price')
-    
-    # Define a color map for predictions
-    colors = ['red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
-    
-    for i, ((dates, pred), name) in enumerate(zip(predictions, model_names)):
-        color = colors[i % len(colors)];
+            model_names.append(os.path.basename(model_path))
+            longest_path = max(longest_path, len(model_path))
 
-        plt.plot(dates, pred, color=color, label=f'{name.ljust(longest_path)}', linewidth=0.75)
+            mse, mae, rmse = model_evaluation(dummy_pred_array, test_label)
+            accuracy = model_accuracy(test_inv_pred, test_inv_label)
 
-    plt.title(f'{data_name} Close Price')
-    plt.xlabel('')
-    plt.ylabel('Close Price')
-    plt.legend()
+            mseVec.append(mse)
+            maeVec.append(mae)
+            rmseVec.append(rmse)
+            accuVec.append(accuracy)
 
-    # Create filename from all model names
-    filename = f'./figures/compare-{"-".join(model_names)}-{data_name}.svg'
-    os.makedirs('./figures', exist_ok=True)
-    plt.savefig(filename)
+            base_save_dir = f'./compare/{model_basename}/{ticker}/';
+            os.makedirs(base_save_dir, exist_ok=True);
 
-    plt.show()
+            # plotting model evaluation stats
+            plot_model_evaluation(model_names, mseVec, maeVec, rmseVec, base_save_dir)
+
+            # plot model accuracy
+            plot_model_accuracy(model_names, accuVec, base_save_dir)
+
+            # Plot setup
+            plt.figure(figsize=(6,6))
+            
+            # Plot actual values (using the last test_inv_label since they're all the same)
+            plt.plot(test_dates_full, test_close_full, color='blue', label='Actual Close Price')
+            
+            # Define a color map for predictions
+            colors = ['red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+            
+            for i, ((dates, pred), name) in enumerate(zip(predictions, model_names)):
+                color = colors[i % len(colors)];
+
+                plt.plot(dates, pred, color=color, label=f'{name.ljust(longest_path)}', linewidth=0.75)
+
+            plt.title(f'{ticker} Close Price')
+            plt.xlabel('')
+            plt.ylabel('Close Price')
+            plt.legend()
+
+            # Create filename from all model names
+            filename = f'time_series.svg'
+            plt.savefig(base_save_dir + filename)
+
+            #plt.show()
 
 def model_evaluation(prediction, test):
     accuracy = 0
@@ -233,7 +248,7 @@ def sort_models_by_complexity(model_names, metrics):
     
     return sorted_names, sorted_metrics
 
-def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
+def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec, base_save_dir):
     # Sort models and metrics by complexity
     modelNames, mseVec = sort_models_by_complexity(modelNames, mseVec)
     modelNames, maeVec = sort_models_by_complexity(modelNames, maeVec)
@@ -280,10 +295,9 @@ def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec):
     plt.tight_layout()  # Adjust layout to prevent label cutoff
 
     # Save the figure
-    filename = f'./figures/modelEvalStats.png'
-    os.makedirs('./figures', exist_ok=True)
-    plt.savefig(filename, bbox_inches='tight', dpi=300)
-    plt.show()
+    filename = f'modelEvalStats.svg'
+    plt.savefig(base_save_dir + filename, bbox_inches='tight')
+    #plt.show()
 
 def model_accuracy(prediction_inv, test_inv):
     accuracy = 0
@@ -296,7 +310,7 @@ def model_accuracy(prediction_inv, test_inv):
     accuracy_perc = (accuracy/datapts_total)*100
     return accuracy_perc
 
-def plot_model_accuracy(model_names, accuracy):
+def plot_model_accuracy(model_names, accuracy, base_save_dir):
     # Sort models and accuracy by complexity
     model_names, accuracy = sort_models_by_complexity(model_names, accuracy)
     
@@ -328,7 +342,6 @@ def plot_model_accuracy(model_names, accuracy):
     plt.tight_layout()  # Adjust layout to prevent label cutoff
 
     # Save the figure
-    filename = f'./figures/modelAccuracy.png'
-    os.makedirs('./figures', exist_ok=True)
-    plt.savefig(filename, bbox_inches='tight', dpi=300)
-    plt.show()
+    filename = f'modelAccuracy.svg'
+    plt.savefig(base_save_dir + filename, bbox_inches='tight')
+    #plt.show()
