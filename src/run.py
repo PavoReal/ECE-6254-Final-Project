@@ -1,5 +1,5 @@
 import argparse
-from ece6254 import train, test, dataset, models, dataset_yfinance, export
+from ece6254 import train, test, dataset, models, dataset_yfinance
 
 def run_main():
     parser = argparse.ArgumentParser(description='CLI interface for training and testing models.')
@@ -51,11 +51,6 @@ def run_main():
     dataset_list_parser.add_argument('-p', '--path', type=str, default="./dataset", help='Path to dataset dir, defaults to ./dataset')
     dataset_list_parser.add_argument('--data_source', type=str, choices=['kaggle', 'yfinance'], default='kaggle', help='Choose data source: kaggle or yfinance')
 
-    # Export chart command
-    export_parser = subparsers.add_parser('export', help='Generate plots')
-    export_parser.add_argument('-m', '--models_dir', type=str, default="./models", help='')
-    export_parser.add_argument('-o', '--output_dir', type=str, default="./", help='')
-
     args = parser.parse_args()
 
     if args.command == 'train':
@@ -88,8 +83,6 @@ def run_main():
     elif args.command == 'dataset_list':
         data_dir = "./yfinance_dataset" if args.data_source == 'yfinance' else args.path
         dataset.print_dataset_list(data_dir)
-    elif args.command == 'export':
-        export.export_main(args.models_dir, args.output_dir)
     else:
         parser.print_help()
 
