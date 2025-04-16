@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import os
+import glob
 import pickle
 import pandas as pd
 import numpy as np
@@ -70,6 +71,45 @@ def load_data_files(data_name, data_dir, shared_data, is_random_forest):
         raise ValueError("Error: Inconsistent or missing sequence/lag information for the model type.")
     
     return test_data, test_seq, test_label, scaler, test_dates, test_dates_full, test_close_full
+
+def summarize_and_plot_model_performance(base_dir='./compare'):
+    csv_files = glob.glob(os.path.join(base_dir, '*', '*', 'modelEvalStats.csv'))
+    all_metrics = []
+    
+    for csv_file in csv_files:
+        try:
+            df = pd.read_csv(csv_file)
+            if not df.empty:
+                all_metrics.append(df)
+        except Exception as e:
+            print(f"Error reading {csv_file}: {e}")
+    
+    if all_metrics:
+        metrics_df = pd.concat(all_metrics)
+
+        error_stats = metrics_df.groupby('Model Name')['Accuracy'].agg(['mean', 'std']).reset_index()
+        error_stats = error_stats.sort_values(by='mean', ascending=False)
+
+        model_names = error_stats['Model Name']
+        means       = error_stats['mean'];
+        std_devs    = error_stats['std'];
+
+        plt.figure(figsize=(12, 6))
+        plt.bar(model_names, means, yerr=std_devs, capsize=5, color='skyblue', edgecolor='black', width=0.4)
+        plt.title('Average Accuracy by Model')
+        plt.xlabel('Model')
+        plt.ylabel('Average Accuracy (%)')
+        plt.xticks(rotation=45, ha='right')
+
+        for i, (mean, std) in enumerate(zip(means, std_devs)):
+            plt.text(i + 0.22, mean + 0.2, f'{mean:.4f}', ha='center')
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(base_dir, 'avg_accuracy.svg'))
+        plt.show()
+        plt.close()
+    else:
+        print("No metrics data found.")
 
 def test_main(model_path, data_name, data_dir):
     model, shared_data = load_model_files(model_path);
@@ -204,16 +244,19 @@ def compare_main(model_paths, data_name, data_dir):
             # Create filename from all model names
             filename = f'time_series.svg'
             plt.savefig(base_save_dir + filename)
+            plt.close();
 
             #plt.show()
 
             # Save metrics to CSV
             metrics_file = f'modelEvalStats.csv'
-            with open(base_save_dir + metrics_file, 'w', newline='') as csvfile:
+            with open(base_save_dir + metrics_file, 'w') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(['Model Name', 'MAE', 'MSE', 'RMSE', 'Accuracy'])
                 for name, mse, mae, rmse, accuracy in zip(model_names, mseVec, maeVec, rmseVec, accuVec):
                     writer.writerow([name, mae, mse, rmse, accuracy])
+
+    summarize_and_plot_model_performance();
 
 def model_evaluation(prediction, test):
     accuracy = 0
@@ -313,6 +356,7 @@ def plot_model_evaluation(modelNames, mseVec, maeVec, rmseVec, base_save_dir):
     # Save the figure
     filename = f'modelEvalStats.svg'
     plt.savefig(base_save_dir + filename, bbox_inches='tight')
+    plt.close();
     #plt.show()
 
 def model_accuracy(prediction_inv, test_inv):
@@ -360,4 +404,5 @@ def plot_model_accuracy(model_names, accuracy, base_save_dir):
     # Save the figure
     filename = f'modelAccuracy.svg'
     plt.savefig(base_save_dir + filename, bbox_inches='tight')
+    plt.close();
     #plt.show()
