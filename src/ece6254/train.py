@@ -34,16 +34,18 @@ def build_hp_model(hp):
     return build_hp_model_func(hp, build_hp_model_seq_length, build_hp_model_data_shape);
 
 def train_main(model_file_path, data_name, data_dir, features, seq_length, epochs, model_arch, lag, tune_epocs):
-    train_file_path, test_file_path = dataset.get_dataset_files(data_name, data_dir)
+    train_file_path, test_file_path, val_file_path = dataset.get_dataset_files(data_name, data_dir)
 
     # Load dataset
     training_data = pd.read_csv(train_file_path)
     testing_data  = pd.read_csv(test_file_path)
+    validation_data = pd.read_csv(val_file_path)
 
     # Fit our scaler
     scaler     = MinMaxScaler()
     train_data = scaler.fit_transform(training_data[features])
     test_data  = scaler.transform(testing_data[features])
+    val_data  = scaler.transform(validation_data[features])
 
     if len(train_data) < seq_length and "randForest" != model_arch["name"]:
         raise ValueError("Not enough input data")
@@ -53,12 +55,14 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
     if "randForest" != model_arch["name"]:
         train_seq, train_label = dataset.create_sequence(train_data, seq_length)
         test_seq,  test_label  = dataset.create_sequence(test_data,  seq_length)
+        val_seq,  val_label   = dataset.create_sequence(val_data,   seq_length)
 
         if train_seq.size == 0:
             raise ValueError("Training data is empty")
 
         train_seq = np.array(train_seq, dtype=np.float32)
         test_seq  = np.array(test_seq,  dtype=np.float32)
+        val_seq = np.array(val_seq,  dtype=np.float32)
 
         model_load_path = model_file_path + '.keras'
     else:
@@ -81,25 +85,28 @@ def train_main(model_file_path, data_name, data_dir, features, seq_length, epoch
             global build_hp_model_seq_length;
             build_hp_model_seq_length = seq_length;
 
-            tuner = kt.RandomSearch(
-                build_hp_model,
-                objective='val_mse',
-                max_trials=tune_epocs,
-                executions_per_trial=2,
-                directory='tuner_work',
-                project_name=model_arch["name"]
+            # tuner = kt.RandomSearch(
+            #     build_hp_model,
+            #     objective='val_mse',
+            #     max_trials=5,
+            #     executions_per_trial=1,
+            #     directory='tuner_work',
+            #     project_name=model_arch["name"]
+            # )
+
+            tuner = kt.Hyperband(
+               build_hp_model,
+               objective='val_mse',
+               max_epochs=30,
+               factor=3,
+               executions_per_trial=2,
+               directory='tuner_work',
+               project_name=model_arch["name"]
             )
 
-            #tuner = kt.Hyperband(
-            #    build_hp_model,
-            #    objective='val_mse',
-            #    factor=3,
-            #    executions_per_trial=2,
-            #    directory='tuner_work',
-            #    project_name=model_arch["name"]
-            #)
+            stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
 
-            tuner.search(train_seq, train_label, epochs=20, validation_data=(test_seq, test_label));
+            tuner.search(train_seq, train_label, epochs=30, validation_data=(val_seq, val_label), callbacks=[stop_early], batch_size=64);
 
             model = tuner.get_best_models(num_models=1)[0];
         else:

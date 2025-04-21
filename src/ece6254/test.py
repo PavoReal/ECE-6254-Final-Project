@@ -4,17 +4,14 @@ import glob, os
 import pickle
 import pandas as pd
 import numpy as np
-<<<<<<< HEAD
 import csv
 from ece6254 import randomForest
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-=======
->>>>>>> f3f1531ec352eeb9d699be086ccb18512dc5fbf6
 
 from . import dataset
 
 def load_model_files(model_path, data_name, data_dir):
-    ignored, dataset_load_path = dataset.get_dataset_files(data_name, data_dir)
+    ignored, dataset_load_path, _ = dataset.get_dataset_files(data_name, data_dir)
 
     model_load_path       = model_path + '.keras'
     shared_data_load_path = model_path;
@@ -35,10 +32,10 @@ def load_model_files(model_path, data_name, data_dir):
             print(f'Loaded RF pickle model {rf_model_path} from disk')
         else:
             print(f"Error: Model file not found at either {model_load_path} or {rf_model_path}")
-            return None, None, None, None, None
+            return None, None, None, None, None, None
     except Exception as e:
         print(f"Error loading model: {e}")
-        return None, None, None, None, None
+        return None, None, None, None, None, None
 
     testing_data = pd.read_csv(dataset_load_path)
 
@@ -70,24 +67,7 @@ def test_main(model_path, data_name, data_dir):
 
     test_pred = model.predict(test_seq)
 
-<<<<<<< HEAD
     features = shared_data["features"]
-=======
-    # debugging print statements
-    # print(f"test_seq shape: {test_seq.shape}")
-    # print(f"test_label shape: {test_label.shape}")
-    # print(f"test_pred shape: {model.predict(test_seq).shape}")
-    # Prediction & inverse scaling
-    test_pred = model.predict(test_seq)
-
-    # put the predictions in the correct column (assuming we're predicting Close)
-    with open(model_path + '.pkl', "rb") as f:
-        shared_data = pickle.load(f)
-    features = shared_data["features"]
-
-    # only selecting the 'Close' feature
-    target_feature_index = features.index('Close') if 'Close' in features else 0
->>>>>>> f3f1531ec352eeb9d699be086ccb18512dc5fbf6
 
     # only selecting the 'Close' feature
     target_feature_index = features.index('Close') if 'Close' in features else 0
@@ -109,11 +89,7 @@ def test_main(model_path, data_name, data_dir):
     test_inv_label = test_inv_label[:, target_feature_index].reshape(-1, 1)
 
     # Xkcd style, cool kids only
-<<<<<<< HEAD
     #plt.xkcd()
-=======
-    plt.xkcd()
->>>>>>> f3f1531ec352eeb9d699be086ccb18512dc5fbf6
 
     # Plot predicted vs actual
     plt.figure(figsize=(12,6))
@@ -206,7 +182,6 @@ def compare_main(model_paths, data_name, data_dir):
 
     plt.show()
 
-<<<<<<< HEAD
     # Save metrics to CSV
     metrics_file = f'./figures/modelEvalStats.csv'
     with open(metrics_file, 'w', newline='') as csvfile:
@@ -363,6 +338,4 @@ def plot_model_accuracy(model_names, accuracy):
     filename = f'./figures/modelAccuracy.png'
     os.makedirs('./figures', exist_ok=True)
     plt.savefig(filename, bbox_inches='tight', dpi=300)
-=======
->>>>>>> f3f1531ec352eeb9d699be086ccb18512dc5fbf6
     plt.show()

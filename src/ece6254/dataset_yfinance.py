@@ -14,11 +14,13 @@ def get_all_symbols(dataset_dir):
     
     return symbols
 
-def download_and_split_data(symbol, output_dir="./yfinance_dataset", train_ratio=0.8):
+def download_and_split_data(symbol, output_dir="./yfinance_dataset", train_ratio=0.7, val_ratio=0.15):
     train_dir = os.path.join(output_dir, "split", "train")
     test_dir = os.path.join(output_dir, "split", "test")
+    val_dir = os.path.join(output_dir, "split", "val")
     os.makedirs(train_dir, exist_ok=True)
     os.makedirs(test_dir, exist_ok=True)
+    os.makedirs(val_dir, exist_ok=True)
 
     print(f"Downloading data for {symbol}...")
     ticker = yf.Ticker(symbol)
@@ -44,14 +46,22 @@ def download_and_split_data(symbol, output_dir="./yfinance_dataset", train_ratio
         })
         
         data = data.sort_values('Date')
-        
-        split_idx = int(len(data) * train_ratio)
-        train_data = data.iloc[:split_idx]
-        test_data = data.iloc[split_idx:]
+
+        total_len = len(data)
+        train_end = int(total_len * train_ratio)
+        val_end = int(total_len * (train_ratio + val_ratio))
+
+        train_data = data.iloc[:train_end]
+        val_data   = data.iloc[train_end:val_end]
+        test_data  = data.iloc[val_end:]
+
         train_file = os.path.join(train_dir, f"{symbol}.csv")
         test_file = os.path.join(test_dir, f"{symbol}.csv")
+        val_file = os.path.join(val_dir, f"{symbol}.csv")
+        
         train_data.to_csv(train_file, index=False)
         test_data.to_csv(test_file, index=False)
+        val_data.to_csv(val_file, index=False)
         
         print(f"Data saved for {symbol}")
     

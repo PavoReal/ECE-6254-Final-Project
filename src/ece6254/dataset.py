@@ -21,8 +21,11 @@ def get_training_dataset_path(ticker, data_dir):
 def get_testing_dataset_path(ticker, data_dir):
     return os.path.join(data_dir, 'split', 'test', ticker + '.csv')
 
+def get_validation_dataset_path(ticker, data_dir):
+    return os.path.join(data_dir, 'split', 'val', ticker + '.csv')
+
 def get_dataset_files(ticker, data_dir):
-    return get_training_dataset_path(ticker, data_dir), get_testing_dataset_path(ticker, data_dir)
+    return get_training_dataset_path(ticker, data_dir), get_testing_dataset_path(ticker, data_dir), get_validation_dataset_path(ticker, data_dir)
 
 def create_sequence(dataset, seq_length):
     if len(dataset) <= seq_length:
@@ -37,18 +40,22 @@ def create_sequence(dataset, seq_length):
 
     return np.array(seqs), np.array(labels)
 
-def split_data_csv(pre_path, output_dir, name, train_ratio=0.8):
+def split_data_csv(pre_path, output_dir, name, train_ratio=0.7, val_ratio=0.15):
     # Load the dataset
     raw_file = pd.read_csv(pre_path, parse_dates=['Date'])
 
     file_sorted = raw_file.sort_values('Date')
 
-    split_idx = int(len(file_sorted) * 0.8)
+    total_len = len(file_sorted)
+    train_end = int(total_len * train_ratio)
+    val_end = int(total_len * (train_ratio + val_ratio))
 
-    train_set = file_sorted.iloc[:split_idx]
-    test_set  = file_sorted.iloc[split_idx:]
+    train_set = file_sorted.iloc[:train_end]
+    val_set   = file_sorted.iloc[train_end:val_end]
+    test_set  = file_sorted.iloc[val_end:]
 
     train_set.to_csv(os.path.join(output_dir, 'train', name + '.csv'), index=False)
+    val_set.to_csv(os.path.join(output_dir,   'val', name + '.csv'), index=False)
     test_set.to_csv(os.path.join(output_dir,  'test',  name + '.csv'), index=False)
 
 def download_and_save(download_path):
@@ -79,6 +86,7 @@ def download_and_save(download_path):
     split_output_path = os.path.join(download_path, 'split')
 
     os.makedirs(os.path.join(split_output_path, 'train'), exist_ok=True)
+    os.makedirs(os.path.join(split_output_path, 'val'), exist_ok=True)
     os.makedirs(os.path.join(split_output_path, 'test'),  exist_ok=True)
 
     os.makedirs(split_output_path, exist_ok=True)
